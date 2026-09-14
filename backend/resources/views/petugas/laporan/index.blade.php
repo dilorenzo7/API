@@ -1,0 +1,186 @@
+ extends('layouts.app')
+
+@section('title', 'Cetak Laporan - Panel Petugas')
+@section('header-title', 'Laporan Peminjaman')
+
+@section('content')  
+
+    {{-- Filter --}}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="p-5 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-base font-bold text-gray-800">Filter Laporan</h3>
+        </div>
+        <form action="{{ route('petugas.laporan.index') }}" method="GET" class="p-5">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai</label>
+                    <input type="date" name="start_date" value="{{ $startDate }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Akhir</label>
+                    <input type="date" name="end_date" value="{{ $endDate }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Semua Status --</option>
+                        <option value="diajukan"    {{ $status === 'diajukan'    ? 'selected' : '' }}>Diajukan</option>
+                        <option value="dipinjam"    {{ $status === 'dipinjam'    ? 'selected' : '' }}>Dipinjam</option>
+                        <option value="dikembalikan" {{ $status === 'dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
+                        <option value="telat"       {{ $status === 'telat'       ? 'selected' : '' }}>Telat</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+                        Tampilkan
+                    </button>
+                    <a href="{{ route('petugas.laporan.index') }}"
+                        class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition">
+                        Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- Ringkasan statistik --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-gray-800">{{ $totalSemua }}</p>
+            <p class="text-xs text-gray-500 mt-1">Total Transaksi</p>
+        </div>
+        <div class="bg-white rounded-lg border border-blue-200 shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-blue-600">{{ $totalDipinjam }}</p>
+            <p class="text-xs text-gray-500 mt-1">Sedang Dipinjam</p>
+        </div>
+        <div class="bg-white rounded-lg border border-emerald-200 shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-emerald-600">{{ $totalDikembalikan }}</p>
+            <p class="text-xs text-gray-500 mt-1">Sudah Dikembalikan</p>
+        </div>
+        <div class="bg-white rounded-lg border border-red-200 shadow-sm p-4 text-center">
+            <p class="text-2xl font-bold text-red-600">Rp {{ number_format($totalDenda, 0, ',', '.') }}</p>
+            <p class="text-xs text-gray-500 mt-1">Total Denda</p>
+        </div>
+    </div>
+
+    {{-- Tombol cetak --}}
+    <div class="flex justify-end mb-4 no-print">
+        <button onclick="cetakLaporan()"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition flex items-center gap-2">
+            🖨️ Cetak / Simpan PDF
+        </button>
+    </div>
+
+    {{-- Tabel laporan --}}
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" id="area-cetak">
+
+        {{-- Header cetak (hanya tampil saat print) --}}
+        <div class="only-print p-6 border-b text-center" style="display:none">
+            <h1 class="text-xl font-bold">Laporan Peminjaman Alat</h1>
+            <p class="text-sm text-gray-600 mt-1">
+                @if($startDate && $endDate)
+                    Periode: {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}
+                @else
+                    Semua Periode
+                @endif
+                @if($status) | Status: {{ ucfirst($status) }} @endif
+            </p>
+            <p class="text-xs text-gray-400 mt-1">Dicetak oleh: {{ auth()->user()->name }} — {{ now()->format('d M Y H:i') }}</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
+                        <th class="py-3 px-4 border-b">#</th>
+                        <th class="py-3 px-4 border-b">Peminjam</th>
+                        <th class="py-3 px-4 border-b">Alat</th>
+                        <th class="py-3 px-4 border-b">Tgl Pinjam</th>
+                        <th class="py-3 px-4 border-b">Rencana Kembali</th>
+                        <th class="py-3 px-4 border-b">Tgl Kembali</th>
+                        <th class="py-3 px-4 border-b">Status</th>
+                        <th class="py-3 px-4 border-b">Denda</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    @forelse($peminjamans as $i => $p)
+                        <tr class="hover:bg-gray-50 transition align-top">
+                            <td class="py-2 px-4 border-b text-gray-400">{{ $i + 1 }}</td>
+                            <td class="py-2 px-4 border-b font-medium">{{ $p->user->name ?? '-' }}</td>
+                            <td class="py-2 px-4 border-b">
+                                @foreach($p->detailPinjam as $d)
+                                    <span class="block">{{ $d->alat->nama_alat ?? '-' }} ({{ $d->jumlah }})</span>
+                                @endforeach
+                            </td>
+                            <td class="py-2 px-4 border-b">
+                                {{ \Carbon\Carbon::parse($p->tgl_pinjam)->format('d/m/Y') }}
+                            </td>
+                            <td class="py-2 px-4 border-b">
+                                {{ \Carbon\Carbon::parse($p->tgl_kembali_plan)->format('d/m/Y') }}
+                            </td>
+                            <td class="py-2 px-4 border-b">
+                                {{ $p->pengembalian ? \Carbon\Carbon::parse($p->pengembalian->tgl_kembali)->format('d/m/Y') : '-' }}
+                            </td>
+                            <td class="py-2 px-4 border-b">
+                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full
+                                    @if($p->status === 'diajukan')      bg-yellow-100 text-yellow-800
+                                    @elseif($p->status === 'dipinjam')  bg-blue-100 text-blue-800
+                                    @elseif($p->status === 'dikembalikan') bg-emerald-100 text-emerald-800
+                                    @elseif($p->status === 'telat')     bg-red-100 text-red-800
+                                    @else bg-gray-100 text-gray-600 @endif">
+                                    {{ ucfirst($p->status) }}
+                                </span>
+                            </td>
+                            <td class="py-2 px-4 border-b">
+                                @if($p->pengembalian && $p->pengembalian->denda > 0)
+                                    <span class="text-red-600 font-semibold">
+                                        Rp {{ number_format($p->pengembalian->denda, 0, ',', '.') }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="py-8 text-center text-gray-500">
+                                Tidak ada data untuk filter yang dipilih.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                @if($peminjamans->count() > 0)
+                <tfoot>
+                    <tr class="bg-gray-50 font-semibold text-sm">
+                        <td colspan="7" class="py-3 px-4 border-t text-right text-gray-700">Total Denda:</td>
+                        <td class="py-3 px-4 border-t text-red-600">
+                            Rp {{ number_format($totalDenda, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
+
+    <style>
+        @media print {
+            aside, header, .no-print { display: none !important; }
+            .only-print { display: block !important; }
+            #area-cetak { display: block !important; width: 100% !important; }
+            body { background: white !important; }
+            .flex { display: block !important; }
+            .overflow-hidden { overflow: visible !important; }
+        }
+    </style>
+
+    <script>
+        function cetakLaporan() {
+            window.print();
+        }
+    </script>
+@endsection

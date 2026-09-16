@@ -10,6 +10,10 @@ class PengembalianObserver
 {
     public function created(Pengembalian $pengembalian): void
     {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
         $dendaInfo = $pengembalian->denda > 0
             ? " dengan denda Rp " . number_format($pengembalian->denda, 0, ',', '.')
             : ' tanpa denda';
@@ -22,6 +26,10 @@ class PengembalianObserver
 
     public function updated(Pengembalian $pengembalian): void
     {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
         LogAktivitas::create([
             'user_id'   => Auth::id(),
             'aktivitas' => "Memperbarui data pengembalian ID: {$pengembalian->id} (peminjaman ID: {$pengembalian->peminjaman_id}).",
@@ -30,6 +38,10 @@ class PengembalianObserver
 
     public function deleted(Pengembalian $pengembalian): void
     {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
         LogAktivitas::create([
             'user_id'   => Auth::id(),
             'aktivitas' => "Menghapus data pengembalian ID: {$pengembalian->id} (peminjaman ID: {$pengembalian->peminjaman_id}).",

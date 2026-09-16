@@ -14,10 +14,6 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
-    // CRUD Alat
-    Route::get('/alat', [AdminController::class, 'indexAlat'])->name('alat.index');
-    Route::post('/alat', [AdminController::class, 'storeAlat'])->name('alat.store');
-
     // CRUD User
     Route::get('/users', [AdminController::class, 'indexUser'])->name('user.index');
     Route::get('/users/create', [AdminController::class, 'createUser'])->name('user.create');
@@ -26,7 +22,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('user.update');
     Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('user.destroy');
 
-    //crud kategori
+    // CRUD Kategori
     Route::get('/kategori', [AdminController::class, 'indexKategori'])->name('kategori.index');
     Route::get('/kategori/create', [AdminController::class, 'createKategori'])->name('kategori.create');
     Route::post('/kategori', [AdminController::class, 'storeKategori'])->name('kategori.store');
@@ -34,7 +30,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/kategori/{id}', [AdminController::class, 'updateKategori'])->name('kategori.update');
     Route::delete('/kategori/{id}', [AdminController::class, 'destroyKategori'])->name('kategori.destroy');
 
-    //crud alat
+    // CRUD Alat
     Route::get('/alat', [AdminController::class, 'indexAlat'])->name('alat.index');
     Route::get('/alat/create', [AdminController::class, 'createAlat'])->name('alat.create');
     Route::post('/alat', [AdminController::class, 'storeAlat'])->name('alat.store');
@@ -42,19 +38,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/alat/{id}', [AdminController::class, 'updateAlat'])->name('alat.update');
     Route::delete('/alat/{id}', [AdminController::class, 'destroyAlat'])->name('alat.destroy');
 
-    //crud peminjaman
+    // CRUD Peminjaman
     Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::get('/peminjaman/create', [AdminController::class, 'createPeminjaman'])->name('peminjaman.create');
     Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('peminjaman.store');
     Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.updateStatus');
     Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 
-    // crud pengembalian
+    // CRUD Pengembalian
     Route::get('/pengembalian', [AdminController::class, 'indexPengembalian'])->name('pengembalian.index');
-       Route::get('/pengembalian/{id}/create', [AdminController::class, 'createPengembalian'])->name('pengembalian.create');
+    Route::get('/pengembalian/{id}/create', [AdminController::class, 'createPengembalian'])->name('pengembalian.create');
     Route::post('/pengembalian/{id}', [AdminController::class, 'storePengembalian'])->name('pengembalian.store');
     Route::delete('/pengembalian/{id}', [AdminController::class, 'destroyPengembalian'])->name('pengembalian.destroy');
-
 });
 
 
@@ -71,6 +66,7 @@ Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petu
 
     // Cetak Laporan
     Route::get('/laporan', [PetugasController::class, 'laporanIndex'])->name('laporan.index');
+    Route::get('/laporan/cetak-pdf', [PetugasController::class, 'cetakPdf'])->name('laporan.cetakPdf'); // <-- DITAMBAHKAN DI SINI
 });
 
 // peminjam

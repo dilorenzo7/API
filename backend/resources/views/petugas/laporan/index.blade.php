@@ -1,12 +1,12 @@
- extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Cetak Laporan - Panel Petugas')
 @section('header-title', 'Laporan Peminjaman')
 
 @section('content')  
 
-    {{-- Filter --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    {{-- Filter (Sembunyi saat diprint) --}}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 no-print">
         <div class="p-5 border-b border-gray-200 bg-gray-50">
             <h3 class="text-base font-bold text-gray-800">Filter Laporan</h3>
         </div>
@@ -47,8 +47,8 @@
         </form>
     </div>
 
-    {{-- Ringkasan statistik --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    {{-- Ringkasan statistik Layar (Sembunyi saat diprint) --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
         <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 text-center">
             <p class="text-2xl font-bold text-gray-800">{{ $totalSemua }}</p>
             <p class="text-xs text-gray-500 mt-1">Total Transaksi</p>
@@ -75,25 +75,26 @@
         </button>
     </div>
 
-    {{-- Tabel laporan --}}
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200" id="area-cetak">
+    {{-- AREA UTAMA LAPORAN --}}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" id="area-cetak">
 
-        {{-- Header cetak (hanya tampil saat print) --}}
-        <div class="only-print p-6 border-b text-center" style="display:none">
-            <h1 class="text-xl font-bold">Laporan Peminjaman Alat</h1>
+        {{-- Header khusus Surat/Laporan Resmi --}}
+        <div class="cetak-header text-center mb-6 border-b-2 border-gray-800 pb-4">
+            <h1 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">Laporan Peminjaman Alat</h1>
             <p class="text-sm text-gray-600 mt-1">
                 @if($startDate && $endDate)
-                    Periode: {{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}
+                    Periode: <strong>{{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}</strong> s/d <strong>{{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</strong>
                 @else
-                    Semua Periode
+                    Periode: <strong>Semua Waktu</strong>
                 @endif
-                @if($status) | Status: {{ ucfirst($status) }} @endif
+                @if($status) | Status: <strong>{{ ucfirst($status) }}</strong> @endif
             </p>
-            <p class="text-xs text-gray-400 mt-1">Dicetak oleh: {{ auth()->user()->name }} — {{ now()->format('d M Y H:i') }}</p>
+            <p class="text-xs text-gray-500 mt-1">Dicetak oleh: {{ auth()->user()->name }} pada {{ now()->format('d/m/Y H:i') }}</p>
         </div>
 
+        {{-- Tabel --}}
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse text-sm">
+            <table class="tabel-laporan w-full text-left border-collapse text-sm">
                 <thead>
                     <tr class="bg-gray-100 text-gray-600 text-xs uppercase tracking-wider">
                         <th class="py-3 px-4 border-b">#</th>
@@ -113,7 +114,7 @@
                             <td class="py-2 px-4 border-b font-medium">{{ $p->user->name ?? '-' }}</td>
                             <td class="py-2 px-4 border-b">
                                 @foreach($p->detailPinjam as $d)
-                                    <span class="block">{{ $d->alat->nama_alat ?? '-' }} ({{ $d->jumlah }})</span>
+                                    <span class="block">• {{ $d->alat->nama_alat ?? '-' }} ({{ $d->jumlah }})</span>
                                 @endforeach
                             </td>
                             <td class="py-2 px-4 border-b">
@@ -126,7 +127,7 @@
                                 {{ $p->pengembalian ? \Carbon\Carbon::parse($p->pengembalian->tgl_kembali)->format('d/m/Y') : '-' }}
                             </td>
                             <td class="py-2 px-4 border-b">
-                                <span class="px-2 py-0.5 text-xs font-semibold rounded-full
+                                <span class="badge-status px-2 py-0.5 text-xs font-semibold rounded-full
                                     @if($p->status === 'diajukan')      bg-yellow-100 text-yellow-800
                                     @elseif($p->status === 'dipinjam')  bg-blue-100 text-blue-800
                                     @elseif($p->status === 'dikembalikan') bg-emerald-100 text-emerald-800
@@ -167,14 +168,68 @@
         </div>
     </div>
 
+    {{-- Styling Khusus Cetak & Layar --}}
     <style>
+        /* Sembunyikan header cetak di layar biasa */
+        .cetak-header {
+            display: none;
+        }
+
+        /* ATURAN KHUSUS CETAK / PRINT */
         @media print {
-            aside, header, .no-print { display: none !important; }
-            .only-print { display: block !important; }
-            #area-cetak { display: block !important; width: 100% !important; }
-            body { background: white !important; }
-            .flex { display: block !important; }
-            .overflow-hidden { overflow: visible !important; }
+            @page {
+                size: A4 landscape;
+                margin: 1cm;
+            }
+
+            /* Sembunyikan elemen navigasi, sidebar, filter, & tombol */
+            aside, nav, header, .no-print { 
+                display: none !important; 
+            }
+
+            /* Munculkan header cetak */
+            .cetak-header {
+                display: block !important;
+            }
+
+            body { 
+                background: #ffffff !important;
+                font-family: Arial, sans-serif !important;
+                color: #000000 !important;
+            }
+
+            #area-cetak { 
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Perbaikan paksa tabel agar rapi dan bertabel saat diprint */
+            .tabel-laporan {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 11px !important;
+            }
+
+            .tabel-laporan th, 
+            .tabel-laporan td {
+                border: 1px solid #000000 !important;
+                padding: 6px 8px !important;
+            }
+
+            .tabel-laporan th {
+                background-color: #f2f2f2 !important;
+                font-weight: bold !important;
+                text-align: left !important;
+            }
+
+            /* Hilangkan background badge biar tetap jelas di kertas */
+            .badge-status {
+                background: transparent !important;
+                padding: 0 !important;
+                font-weight: bold !important;
+            }
         }
     </style>
 

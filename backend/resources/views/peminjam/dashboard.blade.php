@@ -1,141 +1,122 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard - Portal Peminjam')
-@section('header-title', 'Dashboard Peminjam')
+@section('title', 'Dashboard - Peminjam')
 
 @section('content')
-    @if(session('success'))
-        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg text-sm">
-            {{ session('success') }}
+    <!-- Banner Welcome -->
+    <div class="mb-8 p-6 md:p-8 bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-3xl text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+        <div class="relative z-10">
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">Halo, {{ $user->name }}! 👋</h2>
+            <p class="text-indigo-100 text-sm md:text-base max-w-xl">
+                Selamat datang di portal peminjaman alat. Pilih barang yang kamu butuhkan dan ajukan peminjaman dengan mudah.
+            </p>
         </div>
-    @endif
-    @if(session('error'))
-        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    {{-- Sambutan --}}
-    <div class="mb-6 bg-blue-600 rounded-xl p-6 text-white shadow">
-        <h2 class="text-xl font-bold">Selamat datang, {{ $user->name }}! 👋</h2>
-        <p class="text-blue-100 text-sm mt-1">Kelola peminjaman alat kamu dari sini.</p>
-        <a href="{{ route('peminjam.katalog') }}"
-           class="mt-4 inline-block bg-white text-blue-600 text-sm font-semibold px-5 py-2 rounded-lg hover:bg-blue-50 transition">
-            + Ajukan Peminjaman Baru
-        </a>
+        <i class="bi bi-tools absolute -bottom-6 -right-6 text-9xl text-white/10 pointer-events-none"></i>
     </div>
 
-    {{-- Kartu Statistik --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-            <p class="text-3xl font-bold text-gray-800">{{ $totalPeminjaman }}</p>
-            <p class="text-xs text-gray-500 mt-1">Total Peminjaman</p>
-        </div>
-        <div class="bg-white rounded-xl border border-yellow-200 shadow-sm p-4 text-center">
-            <p class="text-3xl font-bold text-yellow-500">{{ $menungguPersetujuan }}</p>
-            <p class="text-xs text-gray-500 mt-1">Menunggu Persetujuan</p>
-        </div>
-        <div class="bg-white rounded-xl border border-blue-200 shadow-sm p-4 text-center">
-            <p class="text-3xl font-bold text-blue-500">{{ $sedangDipinjam }}</p>
-            <p class="text-xs text-gray-500 mt-1">Sedang Dipinjam</p>
-        </div>
-        <div class="bg-white rounded-xl border border-emerald-200 shadow-sm p-4 text-center">
-            <p class="text-3xl font-bold text-emerald-500">{{ $totalSelesai }}</p>
-            <p class="text-xs text-gray-500 mt-1">Sudah Dikembalikan</p>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {{-- Peminjaman Terbaru --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 text-sm">Aktivitas Terbaru</h3>
-                <a href="{{ route('peminjam.riwayat') }}" class="text-blue-600 text-xs hover:underline">
-                    Lihat semua →
-                </a>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-slate-400 mb-1">Total Pengajuan</p>
+                <h3 class="text-2xl font-bold text-slate-800">{{ $totalPeminjaman }}</h3>
             </div>
-            <div class="divide-y divide-gray-100">
-                @forelse($peminjamanTerbaru as $p)
-                    <div class="p-4 flex items-start gap-3">
-                        {{-- Ikon status --}}
-                        <div class="mt-0.5 text-lg">
-                            @if($p->status === 'diajukan')      ⏳
-                            @elseif($p->status === 'dipinjam')  📦
-                            @elseif($p->status === 'dikembalikan') ✅
-                            @elseif($p->status === 'telat')     ⚠️
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="bi bi-journal-text"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-slate-400 mb-1">Sedang Dipinjam</p>
+                <h3 class="text-2xl font-bold text-slate-800">{{ $sedangDipinjam }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                <i class="bi bi-box-seam"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-slate-400 mb-1">Menunggu Approval</p>
+                <h3 class="text-2xl font-bold text-slate-800">{{ $menungguPersetujuan }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-slate-400 mb-1">Selesai/Dikembalikan</p>
+                <h3 class="text-2xl font-bold text-slate-800">{{ $totalSelesai }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="bi bi-check-circle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row: Alat Tersedia & Riwayat Terbaru -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Preview Alat Tersedia (2 Cols) -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-800">Alat Siap Dipinjam</h3>
+                <a href="{{ route('peminjam.katalog') }}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Lihat Semua &rarr;</a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                @forelse($alatTersedia as $alat)
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+                        <span class="inline-block px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold mb-2">
+                            {{ $alat->kategori->nama_kategori ?? 'Umum' }}
+                        </span>
+                        <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">{{ $alat->nama_alat }}</h4>
+                        <p class="text-xs text-slate-400 mb-3">Sisa Stok: <span class="font-semibold text-slate-700">{{ $alat->stok }}</span></p>
+                        <a href="{{ route('peminjam.katalog') }}" class="block text-center w-full py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-semibold rounded-lg transition">
+                            Pinjam
+                        </a>
+                    </div>
+                @empty
+                    <div class="col-span-full bg-white p-6 rounded-2xl text-center text-slate-400 text-sm">
+                        Tidak ada alat yang tersedia.
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Peminjaman Terbaru (1 Col) -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Aktivitas Terakhir</h3>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                @forelse($peminjamanTerbaru as $item)
+                    <div class="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-800">
+                                {{ $item->detailPinjam->first()->alat->nama_alat ?? 'Alat' }}
+                                @if($item->detailPinjam->count() > 1)
+                                    <span class="text-[10px] font-normal text-slate-500">(+{{ $item->detailPinjam->count() - 1 }} lainnya)</span>
+                                @endif
+                            </p>
+                            <p class="text-[10px] text-slate-400">{{ \Carbon\Carbon::parse($item->tgl_pinjam)->format('d M Y') }}</p>
+                        </div>
+                        <div>
+                            @if($item->status == 'diajukan')
+                                <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">Diajukan</span>
+                            @elseif($item->status == 'dipinjam')
+                                <span class="px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold">Dipinjam</span>
+                            @elseif($item->status == 'dikembalikan')
+                                <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Selesai</span>
+                            @else
+                                <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">Telat</span>
                             @endif
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800 truncate">
-                                @foreach($p->detailPinjam as $d)
-                                    {{ $d->alat->nama_alat ?? '-' }}@if(!$loop->last), @endif
-                                @endforeach
-                            </p>
-                            <p class="text-xs text-gray-500 mt-0.5">
-                                Pinjam: {{ \Carbon\Carbon::parse($p->tgl_pinjam)->format('d M Y') }}
-                                · Kembali: {{ \Carbon\Carbon::parse($p->tgl_kembali_plan)->format('d M Y') }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full
-                            @if($p->status === 'diajukan')       bg-yellow-100 text-yellow-700
-                            @elseif($p->status === 'dipinjam')   bg-blue-100 text-blue-700
-                            @elseif($p->status === 'dikembalikan') bg-emerald-100 text-emerald-700
-                            @elseif($p->status === 'telat')      bg-red-100 text-red-700
-                            @else bg-gray-100 text-gray-600
-                            @endif">
-                            {{ ucfirst($p->status) }}
-                        </span>
                     </div>
                 @empty
-                    <div class="p-6 text-center text-gray-400 text-sm">
-                        Belum ada aktivitas peminjaman.
-                    </div>
+                    <p class="text-center text-xs text-slate-400 py-4">Belum ada riwayat aktivitas.</p>
                 @endforelse
-            </div>
-        </div>
-
-        {{-- Preview Alat Tersedia --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 text-sm">Alat Tersedia</h3>
-                <a href="{{ route('peminjam.katalog') }}" class="text-blue-600 text-xs hover:underline">
-                    Lihat semua →
-                </a>
-            </div>
-            <div class="divide-y divide-gray-100">
-                @forelse($alatTersedia as $alat)
-                    <div class="p-4 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 text-lg">
-                            🔧
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800 truncate">{{ $alat->nama_alat }}</p>
-                            <p class="text-xs text-gray-500">{{ $alat->kategori->nama_kategori ?? '-' }}</p>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <p class="text-sm font-bold {{ $alat->stok <= 2 ? 'text-red-500' : 'text-emerald-600' }}">
-                                {{ $alat->stok }} unit
-                            </p>
-                            <span class="text-xs px-2 py-0.5 rounded-full
-                                @if($alat->status_kondisi === 'baik') bg-emerald-100 text-emerald-700
-                                @elseif($alat->status_kondisi === 'rusak ringan') bg-yellow-100 text-yellow-700
-                                @else bg-red-100 text-red-700 @endif">
-                                {{ ucfirst($alat->status_kondisi) }}
-                            </span>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-6 text-center text-gray-400 text-sm">
-                        Tidak ada alat tersedia.
-                    </div>
-                @endforelse
-            </div>
-            <div class="p-4 bg-gray-50 border-t border-gray-100">
-                <a href="{{ route('peminjam.katalog') }}"
-                   class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition">
-                    Ajukan Peminjaman →
-                </a>
             </div>
         </div>
 

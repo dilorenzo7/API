@@ -1,68 +1,60 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Alat - Panel Admin')
-@section('header-title', 'Tambah Alat Baru')
+@section('title', 'Tambah Kategori - Panel Admin')
 
 @section('content')
-    <div class="max-w-2xl bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <form action="{{ route('admin.alat.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-semibold mb-2">Nama Alat</label>
-                <input type="text" name="nama_alat" value="{{ old('nama_alat') }}" required placeholder="Contoh: Multimeter Digital"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                @error('nama_alat') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+    <!-- Container Utama: Menempatkan Form Tepat di Tengah Halaman -->
+    <div class="min-h-[75vh] flex flex-col justify-center items-center px-4">
+        
+        <!-- Header / Breadcrumb Singkat -->
+        <div class="w-full max-w-xl mb-4 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-slate-800">Tambah Kategori Alat</h2>
+                <p class="text-xs text-slate-400">Tambahkan kategori baru untuk mengelompokkan peralatan.</p>
             </div>
+            <a href="{{ route('admin.kategori.index') }}" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 transition flex items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
 
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-semibold mb-2">Kategori</label>
-                <select name="kategori_id" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Pilih Kategori --</option>
-                    @foreach($kategoris as $kategori)
-                        <option value="{{ $kategori->id }}" {{ old('kategori_id') == $kategori->id ? 'selected' : '' }}>
-                            {{ $kategori->nama_kategori }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('kategori_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            </div>
+        <!-- Card Form di Tengah -->
+        <div class="w-full max-w-xl bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-8">
+            <form action="{{ route('admin.kategori.store') }}" method="POST" class="space-y-6">
+                @csrf
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Input Nama Kategori -->
                 <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Stok</label>
-                    <input type="number" name="stok" value="{{ old('stok', 1) }}" min="0" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('stok') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                        Nama Kategori <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                            <i class="bi bi-tag-fill"></i>
+                        </span>
+                        <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}" required 
+                               placeholder="Contoh: Jaringan, Mikrokontroler, Power Tools"
+                               class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                    </div>
+                    @error('nama_kategori')
+                        <p class="mt-1 text-xs text-rose-500 flex items-center gap-1">
+                            <i class="bi bi-exclamation-circle-fill"></i> {{ $message }}
+                        </p>
+                    @enderror
                 </div>
-                <div>
-                    <label class="block text-gray-700 text-sm font-semibold mb-2">Status Kondisi</label>
-                    <input type="text" name="status_kondisi" value="{{ old('status_kondisi', 'Baik') }}" required placeholder="Contoh: Baik / Rusak Ringan"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @error('status_kondisi') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+
+                <!-- Action Buttons -->
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <a href="{{ route('admin.kategori.index') }}"
+                       class="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-1.5">
+                        <i class="bi bi-x-lg"></i> Batal
+                    </a>
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
+                        <i class="bi bi-check-lg"></i> Simpan
+                    </button>
                 </div>
-            </div>
+            </form>
+        </div>
 
-            <div class="mb-4">
-                <label class="block text-gray-700 text-sm font-semibold mb-2">Deskripsi (Opsional)</label>
-                <textarea name="deskripsi" rows="3" placeholder="Keterangan tambahan tentang alat..."
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('deskripsi') }}</textarea>
-                @error('deskripsi') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-gray-700 text-sm font-semibold mb-2">Gambar Alat (Opsional)</label>
-                <input type="file" name="gambar" accept="image/*"
-                       class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                @error('gambar') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-            </div>
-
-            <div class="flex justify-end space-x-2">
-                <a href="{{ route('admin.alat.index') }}"
-                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition">Batal</a>
-                <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Simpan</button>
-            </div>
-        </form>
     </div>
 @endsection

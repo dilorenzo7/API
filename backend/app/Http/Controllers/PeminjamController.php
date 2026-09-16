@@ -121,14 +121,14 @@ class PeminjamController extends Controller
     {
         $status = $request->input('status');
 
-        $peminjamans = Peminjaman::with(['detailPinjam.alat', 'pengembalian'])
+        $riwayat = Peminjaman::with(['detailPinjam.alat', 'pengembalian'])
             ->where('user_id', auth()->id())
             ->when($status, function ($q) use ($status) {
                 $q->where('status', $status);
             })
             ->latest()
-            ->get();
+            ->paginate(10);
 
-        return view('peminjam.riwayat', compact('peminjamans', 'status'));
+        return view('peminjam.riwayat', compact('riwayat', 'status'));
     }
 }

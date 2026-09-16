@@ -1,169 +1,143 @@
 @extends('layouts.app')
 
-@section('title', 'Riwayat Peminjaman - Portal Peminjam')
-@section('header-title', 'Riwayat Peminjaman Saya')
+@section('title', 'Riwayat Peminjaman - Peminjam')
 
 @section('content')
-    @if(session('success'))
-        <div class="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-lg text-sm">
-            {{ session('success') }}
+    <!-- Header & Filter -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">Riwayat Peminjaman</h2>
+            <p class="text-xs text-slate-500">Pantau status pengajuan dan riwayat peminjaman barang Kamu di sini.</p>
         </div>
-    @endif
-    @if(session('error'))
-        <div class="mb-4 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
 
-    {{-- Filter status --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
-        <form action="{{ route('peminjam.riwayat') }}" method="GET" class="flex flex-wrap gap-2">
-            @foreach(['', 'diajukan', 'dipinjam', 'dikembalikan', 'telat'] as $s)
-                <button type="submit" name="status" value="{{ $s }}"
-                    class="px-4 py-1.5 rounded-full text-sm font-medium transition
-                    {{ ($status ?? '') === $s
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                    @if($s === '')           Semua
-                    @elseif($s === 'diajukan')   ⏳ Menunggu
-                    @elseif($s === 'dipinjam')   📦 Dipinjam
-                    @elseif($s === 'dikembalikan') ✅ Dikembalikan
-                    @elseif($s === 'telat')      ⚠️ Telat
-                    @endif
-                    {{-- Badge jumlah --}}
-                </button>
-            @endforeach
+        <form action="{{ route('peminjam.riwayat') }}" method="GET" class="flex flex-wrap md:flex-nowrap gap-2">
+            <!-- Search Kode Transaksi / Barang -->
+            <div class="relative w-full md:w-56">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari barang / kode..." 
+                       class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <i class="bi bi-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            </div>
+            
+            <!-- Status Filter -->
+            <select name="status" onchange="this.form.submit()" class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="">Semua Status</option>
+                <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Diajukan</option>
+                <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Dipinjam</option>
+                <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Selesai</option>
+                <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                <option value="terlambat" {{ request('status') == 'terlambat' ? 'selected' : '' }}>Terlambat</option>
+            </select>
+            
+            @if(request('search') || request('status'))
+                <a href="{{ route('peminjam.riwayat') }}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-200 transition flex items-center gap-1">
+                    <i class="bi bi-x-circle"></i> Reset
+                </a>
+            @endif
         </form>
     </div>
 
-    {{-- Tombol ajukan baru --}}
-    <div class="flex justify-end mb-4">
-        <a href="{{ route('peminjam.katalog') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-            + Ajukan Peminjaman Baru
-        </a>
+    <!-- Alert Notifications -->
+    @if(session('success'))
+        <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl flex items-center gap-2">
+            <i class="bi bi-check-circle-fill text-base"></i> {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-base"></i> {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Riwayat Table Card -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
+                        <th class="py-3.5 px-5">Kode / Tanggal Pinjam</th>
+                        <th class="py-3.5 px-5">Daftar Alat</th>
+                        <th class="py-3.5 px-5">Rencana Kembali</th>
+                        <th class="py-3.5 px-5">Tgl Dikembalikan</th>
+                        <th class="py-3.5 px-5 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                    @forelse($riwayat as $item)
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <!-- Kode Transaksi & Tanggal -->
+                            <td class="py-4 px-5 align-top">
+                                <span class="font-bold text-slate-800 block">#{{ $item->kode_peminjaman ?? $item->id }}</span>
+                                <span class="text-[10px] text-slate-400">{{ \Carbon\Carbon::parse($item->tgl_pinjam)->format('d M Y') }}</span>
+                            </td>
+
+                            <!-- Barang yang Dipinjam -->
+                            <td class="py-4 px-5 align-top">
+                                <ul class="space-y-1">
+                                    @foreach($item->detailPinjam as $detail)
+                                        <li class="flex items-center gap-2">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                            <span class="font-medium text-slate-800">{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}</span>
+                                            <span class="text-[10px] text-slate-400 font-semibold">({{ $detail->jumlah }} unit)</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </td>
+
+                            <!-- Tanggal Rencana Kembali -->
+                            <td class="py-4 px-5 align-top font-medium text-slate-600">
+                                {{ \Carbon\Carbon::parse($item->tgl_kembali_plan)->format('d M Y') }}
+                            </td>
+
+                            <!-- Tanggal Realisasi Kembali -->
+                            <td class="py-4 px-5 align-top">
+                                @if($item->tgl_kembali_real)
+                                    <span class="text-slate-600 font-medium">{{ \Carbon\Carbon::parse($item->tgl_kembali_real)->format('d M Y') }}</span>
+                                @else
+                                    <span class="text-slate-400 italic text-[11px]">-</span>
+                                @endif
+                            </td>
+
+                            <!-- Badge Status -->
+                            <td class="py-4 px-5 align-top text-center">
+                                @if($item->status == 'diajukan')
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Diajukan
+                                    </span>
+                                @elseif($item->status == 'dipinjam')
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Dipinjam
+                                    </span>
+                                @elseif($item->status == 'dikembalikan')
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Selesai
+                                    </span>
+                                @elseif($item->status == 'ditolak')
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Ditolak
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-[10px] font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Terlambat
+                                    </span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400 text-xs">
+                                <i class="bi bi-inbox text-3xl block mb-2 text-slate-300"></i>
+                                Belum ada riwayat peminjaman yang ditemukan.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if(method_exists($riwayat, 'hasPages') && $riwayat->hasPages())
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+                {{ $riwayat->links() }}
+            </div>
+        @endif
     </div>
-
-    {{-- Daftar peminjaman --}}
-    @forelse($peminjamans as $p)
-        <div class="bg-white rounded-xl border shadow-sm mb-4 overflow-hidden
-            @if($p->status === 'diajukan')      border-yellow-200
-            @elseif($p->status === 'dipinjam')  border-blue-200
-            @elseif($p->status === 'dikembalikan') border-emerald-200
-            @elseif($p->status === 'telat')     border-red-300
-            @else border-gray-200 @endif">
-
-            {{-- Header card --}}
-            <div class="px-5 py-3 flex justify-between items-center border-b border-gray-100 bg-gray-50">
-                <div class="flex items-center gap-3">
-                    <span class="text-lg">
-                        @if($p->status === 'diajukan')      ⏳
-                        @elseif($p->status === 'dipinjam')  📦
-                        @elseif($p->status === 'dikembalikan') ✅
-                        @elseif($p->status === 'telat')     ⚠️
-                        @endif
-                    </span>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-800">
-                            Peminjaman #{{ $p->id }}
-                        </p>
-                        <p class="text-xs text-gray-500">
-                            Diajukan {{ $p->created_at->diffForHumans() }}
-                        </p>
-                    </div>
-                </div>
-                <span class="px-3 py-1 text-xs font-semibold rounded-full
-                    @if($p->status === 'diajukan')      bg-yellow-100 text-yellow-800
-                    @elseif($p->status === 'dipinjam')  bg-blue-100 text-blue-800
-                    @elseif($p->status === 'dikembalikan') bg-emerald-100 text-emerald-800
-                    @elseif($p->status === 'telat')     bg-red-100 text-red-800
-                    @else bg-gray-100 text-gray-600 @endif">
-                    {{ ucfirst($p->status) }}
-                </span>
-            </div>
-
-            {{-- Isi card --}}
-            <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-
-                {{-- Alat dipinjam --}}
-                <div>
-                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Alat Dipinjam</p>
-                    <ul class="space-y-1">
-                        @foreach($p->detailPinjam as $d)
-                            <li class="flex items-center gap-2">
-                                <span class="text-gray-800 font-medium">{{ $d->alat->nama_alat ?? 'Alat Dihapus' }}</span>
-                                <span class="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded">
-                                    {{ $d->jumlah }} pcs
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-
-                {{-- Info tanggal --}}
-                <div>
-                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Jadwal</p>
-                    <p class="text-gray-700">
-                        <span class="text-gray-500">Pinjam:</span>
-                        {{ \Carbon\Carbon::parse($p->tgl_pinjam)->format('d M Y') }}
-                    </p>
-                    <p class="text-gray-700 mt-1">
-                        <span class="text-gray-500">Rencana Kembali:</span>
-                        <span class="font-semibold {{ \Carbon\Carbon::today()->gt($p->tgl_kembali_plan) && !in_array($p->status, ['dikembalikan', 'telat']) ? 'text-red-600' : '' }}">
-                            {{ \Carbon\Carbon::parse($p->tgl_kembali_plan)->format('d M Y') }}
-                        </span>
-                    </p>
-                    {{-- Peringatan terlambat --}}
-                    @if(\Carbon\Carbon::today()->gt($p->tgl_kembali_plan) && $p->status === 'dipinjam')
-                        <p class="text-red-600 text-xs mt-1 font-semibold">
-                            ⚠️ Terlambat {{ \Carbon\Carbon::parse($p->tgl_kembali_plan)->diffInDays(\Carbon\Carbon::today()) }} hari!
-                        </p>
-                    @endif
-                </div>
-
-                {{-- Info pengembalian / status --}}
-                <div>
-                    <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Status Pengembalian</p>
-                    @if($p->pengembalian)
-                        <p class="text-gray-700">
-                            <span class="text-gray-500">Tgl Kembali:</span>
-                            {{ \Carbon\Carbon::parse($p->pengembalian->tgl_kembali)->format('d M Y') }}
-                        </p>
-                        <p class="text-gray-700 mt-1">
-                            <span class="text-gray-500">Kondisi:</span>
-                            {{ ucfirst($p->pengembalian->kondisi_kembali) }}
-                        </p>
-                        @if($p->pengembalian->denda > 0)
-                            <p class="text-red-600 font-bold mt-1">
-                                Denda: Rp {{ number_format($p->pengembalian->denda, 0, ',', '.') }}
-                            </p>
-                        @else
-                            <p class="text-emerald-600 text-xs mt-1">✓ Tidak ada denda</p>
-                        @endif
-                    @elseif($p->status === 'diajukan')
-                        <div class="flex items-center gap-2 text-yellow-600">
-                            <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                            <span class="text-xs">Menunggu persetujuan petugas</span>
-                        </div>
-                    @elseif($p->status === 'dipinjam')
-                        <div class="flex items-center gap-2 text-blue-600">
-                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                            <span class="text-xs">Alat sedang digunakan</span>
-                        </div>
-                    @else
-                        <p class="text-gray-400 text-xs italic">-</p>
-                    @endif
-                </div>
-            </div>
-        </div>
-    @empty
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm py-12 text-center text-gray-500">
-            <p class="text-3xl mb-3">📋</p>
-            <p class="font-medium">Belum ada riwayat peminjaman.</p>
-            <a href="{{ route('peminjam.katalog') }}"
-               class="mt-3 inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition">
-                Ajukan Peminjaman Pertama →
-            </a>
-        </div>
-    @endforelse
 @endsection

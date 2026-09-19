@@ -67,7 +67,14 @@ class AdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,petugas,peminjam',
+            'foto_profile' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'alamat' => 'nullable|string',
         ]);
+
+        $fotoPath = null;
+        if ($request->hasFile('foto_profile')) {
+            $fotoPath = $request->file('foto_profile')->store('foto_profile', 'public');
+        }
 
         User::create([
             'name' => $request->name,
@@ -75,6 +82,8 @@ class AdminController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'no_hp' => $request->no_hp,
+            'alamat' => $request->alamat,
+            'foto_profile' => $fotoPath,
         ]);
 
         return redirect()->route('admin.user.index')->with('success', 'User berhasil ditambahkan.');
@@ -96,6 +105,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'role' => 'required|in:admin,petugas,peminjam',
+            'foto_profile' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'alamat' => 'nullable|string',
         ]);
 
         $data = [
@@ -105,8 +116,19 @@ class AdminController extends Controller
             'no_hp' => $request->no_hp,
         ];
 
+        if ($request->filled('alamat')) {
+            $data['alamat'] = $request->alamat;
+        }
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('foto_profile')) {
+            if ($user->foto_profile) {
+                Storage::disk('public')->delete($user->foto_profile);
+            }
+            $data['foto_profile'] = $request->file('foto_profile')->store('foto_profile', 'public');
         }
 
         $user->update($data);

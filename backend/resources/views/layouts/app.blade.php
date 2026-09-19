@@ -22,9 +22,10 @@
 
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .sidebar-link { @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-medium transition-all duration-150; }
-        .sidebar-link.active { @apply bg-indigo-600 text-white shadow-md; box-shadow: 0 4px 14px rgba(99,102,241,.4); }
-        .sidebar-link:not(.active) { @apply text-slate-400 hover:bg-slate-800 hover:text-white; }
+        .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 500; transition: all 150ms ease; }
+        .sidebar-link.active { background-color: #4f46e5; color: #fff; box-shadow: 0 4px 14px rgba(99,102,241,.4); }
+        .sidebar-link:not(.active) { color: #94a3b8; }
+        .sidebar-link:not(.active):hover { background-color: #1e293b; color: #fff; }
         /* Scrollbar tipis */
         aside::-webkit-scrollbar { width: 4px; }
         aside::-webkit-scrollbar-track { background: transparent; }

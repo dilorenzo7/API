@@ -95,11 +95,15 @@
                         <!-- Upload Foto -->
                         <div class="mb-4">
                             <label for="foto" class="form-label fw-semibold">Foto Alat</label>
-                            <input type="file" class="form-control @error('foto') is-invalid @enderror" id="foto" name="foto" accept="image/jpeg,image/png,image/jpg">
+                            <input type="file" class="form-control @error('foto') is-invalid @enderror" id="foto" name="foto" accept="image/jpeg,image/png,image/jpg" onchange="openCropperAlat(event)">
                             <small class="text-muted d-block mt-1">Format gambar: JPG, JPEG, PNG (Maksimal 2MB).</small>
                             @error('foto')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <div id="previewWrap" class="mt-2 hidden">
+                                <img id="previewAlat" src="" class="rounded border" style="width:96px;height:96px;object-fit:cover;">
+                                <span id="previewFileName" class="text-muted small ms-2"></span>
+                            </div>
                         </div>
 
                         <!-- Tombol Aksi -->
@@ -119,4 +123,93 @@
         </div>
     </div>
 </div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+<div id="cropperModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4" style="position:fixed;">
+    <div class="bg-white rounded-2xl shadow-xl p-5" style="max-width:420px;width:100%;">
+        <h3 class="fw-bold mb-3" style="font-size:14px;">Atur Foto Alat</h3>
+        <div style="width:100%;height:280px;background:#f1f5f9;border-radius:12px;overflow:hidden;">
+            <img id="cropperImage" src="" style="max-width:100%;display:block;">
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-3">
+            <i class="bi bi-zoom-out text-muted"></i>
+            <input type="range" id="zoomRange" min="0" max="2" step="0.01" value="0" class="flex-fill">
+            <i class="bi bi-zoom-in text-muted"></i>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" id="cropperCancel" class="btn btn-secondary btn-sm">Batal</button>
+            <button type="button" id="cropperConfirm" class="btn btn-primary btn-sm">Gunakan Foto</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById('cropperModal');
+    const image = document.getElementById('cropperImage');
+    const zoomRange = document.getElementById('zoomRange');
+    const btnCancel = document.getElementById('cropperCancel');
+    const btnConfirm = document.getElementById('cropperConfirm');
+    let cropper = null;
+    let originalName = 'foto.jpg';
+    let inputEl = null;
+
+    window.openCropperAlat = function (event) {
+        inputEl = event.target;
+        const file = inputEl.files[0];
+        if (!file) return;
+        originalName = file.name;
+
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            image.src = ev.target.result;
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                background: false,
+                zoomOnWheel: true,
+                ready: function () { zoomRange.value = 0; }
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    zoomRange.addEventListener('input', function () {
+        if (cropper) cropper.zoomTo(parseFloat(this.value));
+    });
+
+    btnCancel.addEventListener('click', function () {
+        modal.style.display = 'none';
+        if (inputEl) inputEl.value = '';
+        if (cropper) { cropper.destroy(); cropper = null; }
+    });
+
+    btnConfirm.addEventListener('click', function () {
+        if (!cropper || !inputEl) return;
+        cropper.getCroppedCanvas({ width: 600, height: 600 }).toBlob(function (blob) {
+            const croppedFile = new File([blob], originalName, { type: 'image/jpeg' });
+            const dt = new DataTransfer();
+            dt.items.add(croppedFile);
+            inputEl.files = dt.files;
+
+            const url = URL.createObjectURL(blob);
+            const previewWrap = document.getElementById('previewWrap');
+            document.getElementById('previewAlat').src = url;
+            document.getElementById('previewFileName').textContent = originalName;
+            previewWrap.classList.remove('hidden');
+
+            modal.style.display = 'none';
+            cropper.destroy();
+            cropper = null;
+        }, 'image/jpeg', 0.9);
+    });
+})();
+</script>
+
 @endsection

@@ -48,13 +48,14 @@
                     <img id="preview"
                          src="{{ asset('storage/' . $user->foto_profile) }}"
                          alt="Foto Profil"
-                         class="w-28 h-28 rounded-full object-cover ring-4 ring-indigo-100 shadow">
+                         onclick="openLightbox()"
+                         class="w-28 h-28 rounded-full object-cover ring-4 ring-indigo-100 shadow cursor-pointer hover:opacity-90 transition">
                 @else
                     <div id="preview-placeholder"
                          class="w-28 h-28 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-4xl ring-4 ring-indigo-50 shadow">
                         {{ strtoupper(substr($user->name, 0, 1)) }}
                     </div>
-                    <img id="preview" src="" alt="Preview" class="w-28 h-28 rounded-full object-cover ring-4 ring-indigo-100 shadow hidden">
+                    <img id="preview" src="" alt="Preview" onclick="openLightbox()" class="w-28 h-28 rounded-full object-cover ring-4 ring-indigo-100 shadow hidden cursor-pointer hover:opacity-90 transition">
                 @endif
             </div>
 
@@ -73,7 +74,7 @@
                                name="foto_profile"
                                id="foto_profile"
                                accept="image/jpg,image/jpeg,image/png,image/webp"
-                               onchange="previewFoto(event)"
+                               onchange="openCropper(event)"
                                class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-xl p-1">
 
                         <button type="submit"
@@ -134,25 +135,115 @@
 
 </div>
 
-{{-- Script Preview Foto Sebelum Upload --}}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+{{-- Modal Cropper --}}
+<div id="cropperModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-5">
+        <h3 class="text-sm font-bold text-slate-700 mb-3">Atur Foto Profil</h3>
+        <div class="w-full h-72 bg-slate-100 rounded-xl overflow-hidden">
+            <img id="cropperImage" src="" class="max-w-full block">
+        </div>
+        <div class="flex items-center gap-3 mt-4">
+            <i class="bi bi-zoom-out text-slate-400"></i>
+            <input type="range" id="zoomRange" min="0" max="2" step="0.01" value="0" class="flex-1">
+            <i class="bi bi-zoom-in text-slate-400"></i>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+            <button type="button" id="cropperCancel" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded-lg">Batal</button>
+            <button type="button" id="cropperConfirm" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg">Gunakan Foto</button>
+        </div>
+    </div>
+</div>
+
+{{-- Lightbox Lihat Foto --}}
+<div id="lightboxModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4" onclick="closeLightbox(event)">
+    <button type="button" onclick="closeLightbox(event)" class="absolute top-5 right-5 text-white text-3xl leading-none">&times;</button>
+    <img id="lightboxImage" src="" alt="Foto Profil" class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl">
+</div>
+
 <script>
-    function previewFoto(event) {
+(function () {
+    const input = document.getElementById('foto_profile');
+    const preview = document.getElementById('preview');
+    const placeholder = document.getElementById('preview-placeholder');
+    const modal = document.getElementById('cropperModal');
+    const image = document.getElementById('cropperImage');
+    const zoomRange = document.getElementById('zoomRange');
+    const btnCancel = document.getElementById('cropperCancel');
+    const btnConfirm = document.getElementById('cropperConfirm');
+    let cropper = null;
+    let originalName = 'foto.jpg';
+
+    window.openCropper = function (event) {
         const file = event.target.files[0];
         if (!file) return;
+        originalName = file.name;
 
         const reader = new FileReader();
-        reader.onload = function (e) {
-            const preview = document.getElementById('preview');
-            const placeholder = document.getElementById('preview-placeholder');
+        reader.onload = function (ev) {
+            image.src = ev.target.result;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
 
-            preview.src = e.target.result;
-            preview.classList.remove('hidden');
-
-            if (placeholder) {
-                placeholder.classList.add('hidden');
-            }
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(image, {
+                aspectRatio: 1,
+                viewMode: 1,
+                background: false,
+                zoomOnWheel: true,
+                ready: function () { zoomRange.value = 0; }
+            });
         };
         reader.readAsDataURL(file);
-    }
+    };
+
+    zoomRange.addEventListener('input', function () {
+        if (cropper) cropper.zoomTo(parseFloat(this.value));
+    });
+
+    btnCancel.addEventListener('click', function () {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        input.value = '';
+        if (cropper) { cropper.destroy(); cropper = null; }
+    });
+
+    btnConfirm.addEventListener('click', function () {
+        if (!cropper) return;
+        cropper.getCroppedCanvas({ width: 500, height: 500 }).toBlob(function (blob) {
+            const croppedFile = new File([blob], originalName, { type: 'image/jpeg' });
+            const dt = new DataTransfer();
+            dt.items.add(croppedFile);
+            input.files = dt.files;
+
+            const url = URL.createObjectURL(blob);
+            preview.src = url;
+            preview.classList.remove('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            cropper.destroy();
+            cropper = null;
+        }, 'image/jpeg', 0.9);
+    });
+
+    window.openLightbox = function () {
+        if (!preview.src || preview.classList.contains('hidden')) return;
+        document.getElementById('lightboxImage').src = preview.src;
+        const lb = document.getElementById('lightboxModal');
+        lb.classList.remove('hidden');
+        lb.classList.add('flex');
+    };
+
+    window.closeLightbox = function (e) {
+        if (e) e.stopPropagation();
+        const lb = document.getElementById('lightboxModal');
+        lb.classList.add('hidden');
+        lb.classList.remove('flex');
+    };
+})();
 </script>
 @endsection

@@ -270,10 +270,7 @@ class AdminController extends Controller
 
         // Handle Upload Gambar/Foto jika ada
         if ($request->hasFile('foto')) {
-            $file = $request->file('foto');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('storage/alat'), $filename);
-            $data['gambar'] = 'storage/alat/' . $filename;
+            $data['gambar'] = $request->file('foto')->store('alat', 'public');
         }
 
         Alat::create($data);
@@ -314,14 +311,11 @@ class AdminController extends Controller
         // Handle Update Gambar jika ada file baru
         if ($request->hasFile('foto')) {
             // Hapus gambar lama jika ada
-            if ($alat->gambar && file_exists(public_path($alat->gambar))) {
-                unlink(public_path($alat->gambar));
+            if ($alat->gambar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($alat->gambar);
             }
 
-            $file = $request->file('foto');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('storage/alat'), $filename);
-            $data['gambar'] = 'storage/alat/' . $filename;
+            $data['gambar'] = $request->file('foto')->store('alat', 'public');
         }
 
         $alat->update($data);

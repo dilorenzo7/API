@@ -6,11 +6,12 @@ use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\AuthController;
 
+// Landing Page
 Route::get('/', function () {
     return view('welcome');
 });
 
-// admin
+// Group Route: Admin
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 
@@ -52,8 +53,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/pengembalian/{id}', [AdminController::class, 'destroyPengembalian'])->name('pengembalian.destroy');
 });
 
-
-// petugas
+// Group Route: Petugas (Bisa diakses oleh Petugas & Admin)
 Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petugas.')->group(function () {
     // Persetujuan Peminjaman
     Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])->name('peminjaman.index');
@@ -66,10 +66,10 @@ Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petu
 
     // Cetak Laporan
     Route::get('/laporan', [PetugasController::class, 'laporanIndex'])->name('laporan.index');
-    Route::get('/laporan/cetak-pdf', [PetugasController::class, 'cetakPdf'])->name('laporan.cetakPdf'); // <-- DITAMBAHKAN DI SINI
+    Route::get('/laporan/cetak-pdf', [PetugasController::class, 'cetakPdf'])->name('laporan.cetakPdf');
 });
 
-// peminjam
+// Group Route: Peminjam
 Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [PeminjamController::class, 'dashboard'])->name('dashboard');
@@ -80,10 +80,17 @@ Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam
     Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
 });
 
-// Route Tamu (Belum Login)
+// Route Tamu / Guest (Belum Login)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+});
+
+// Route Profil (Semua role yang sudah login)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile',             [AuthController::class, 'showProfile'])->name('profile.show');
+    Route::put('/profile/foto',        [AuthController::class, 'updateFoto'])->name('profile.updateFoto');
+    Route::delete('/profile/foto',     [AuthController::class, 'destroyFoto'])->name('profile.destroyFoto');
 });
 
 // Route Logout (Harus sudah login)

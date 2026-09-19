@@ -9,6 +9,7 @@ use App\Http\Controllers\API\PeminjamanController;
 use App\Http\Controllers\API\PengembalianController;
 use App\Http\Controllers\API\LogAktivitasController;
 use App\Http\Controllers\API\LaporanController;
+use App\Http\Controllers\API\ProfileController;
 
 // ─── Public Routes (Tidak perlu token) ───────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
@@ -20,6 +21,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/me',       [AuthController::class, 'me']);
     Route::post('/logout',  [AuthController::class, 'logout']);
+
+    // Profile — bisa diakses semua role yang sudah login
+    Route::get('/profile',              [ProfileController::class, 'show']);
+    Route::post('/profile/foto',        [ProfileController::class, 'uploadFoto']);
+    Route::delete('/profile/foto',      [ProfileController::class, 'destroyFoto']);
 
     // Alat — bisa diakses semua role yang sudah login (peminjam butuh lihat katalog)
     Route::get('/alat',       [AlatController::class, 'index']);

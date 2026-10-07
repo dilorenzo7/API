@@ -94,6 +94,10 @@
                    class="sidebar-link {{ request()->routeIs('admin.user.*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill text-base"></i> Kelola User
                 </a>
+                <a href="{{ route('admin.log.index') }}"
+                   class="sidebar-link {{ request()->routeIs('admin.log.*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-text text-base"></i> Log Aktivitas
+                </a>
 
             @elseif($role === 'petugas')
             {{-- ─── PETUGAS MENU ─── --}}
@@ -186,32 +190,21 @@
         </button>
     </div>
 
-    {{-- Overlay Mobile --}}
-    <div id="sidebar-overlay" onclick="toggleSidebar()"
-         class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
     {{-- ══════════════════ MAIN CONTENT ══════════════════ --}}
-    <main class="flex-1 p-5 md:p-8 overflow-y-auto min-h-screen">
-        @yield('content')
-    </main>
+        <main class="flex-1 min-w-0 p-4 md:p-8">
+            @yield('content')
+        </main>
 
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const icon    = document.getElementById('sidebar-icon');
-            const isOpen  = !sidebar.classList.contains('-translate-x-full');
-
-            if (isOpen) {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-                icon.className = 'bi bi-list text-xl';
-            } else {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                icon.className = 'bi bi-x-lg text-xl';
+        <script>
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
             }
-        }
-    </script>
-</body>
-</html>
+        </script>
+
+        @stack('scripts')
+    </body>
+    </html>

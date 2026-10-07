@@ -20,7 +20,10 @@
         <h2 class="text-2xl font-bold text-slate-800">Pengembalian Alat</h2>
         <p class="text-sm text-slate-400 mt-1">Daftar peminjaman aktif yang siap diproses pengembaliannya.</p>
     </div>
-    @php $terlambat = $peminjamans->filter(fn($p) => now()->gt($p->tgl_kembali_plan))->count(); @endphp
+    @php
+        // Terlambat = hari jatuh tempo sudah benar-benar lewat
+        $terlambat = $peminjamans->filter(fn($p) => now()->gt($p->tgl_kembali_plan->copy()->endOfDay()))->count();
+    @endphp
     @if($terlambat > 0)
         <span class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 text-sm font-semibold rounded-2xl border border-red-200">
             <i class="bi bi-exclamation-triangle-fill"></i> {{ $terlambat }} Terlambat
@@ -59,7 +62,12 @@
             </thead>
             <tbody>
                 @forelse($peminjamans as $peminjaman)
-                    @php $isTerlambat = now()->gt($peminjaman->tgl_kembali_plan); @endphp
+                    @php
+                        $isTerlambat = now()->gt($peminjaman->tgl_kembali_plan->copy()->endOfDay());
+                        $hariTerlambat = $isTerlambat
+                            ? (int) abs($peminjaman->tgl_kembali_plan->copy()->startOfDay()->diffInDays(now()->startOfDay()))
+                            : 0;
+                    @endphp
                     <tr class="hover:bg-slate-50 transition border-b border-slate-50 {{ $isTerlambat ? 'bg-red-50/30' : '' }}">
                         <td class="py-4 px-5">
                             <div class="flex items-center gap-3">
@@ -91,7 +99,7 @@
                             </span>
                             @if($isTerlambat)
                                 <span class="block text-xs text-red-400 mt-0.5">
-                                    {{ now()->diffInDays($peminjaman->tgl_kembali_plan) }} hari terlambat
+                                    {{ $hariTerlambat }} hari terlambat
                                 </span>
                             @endif
                         </td>

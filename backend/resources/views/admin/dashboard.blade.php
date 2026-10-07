@@ -20,6 +20,10 @@
                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition">
                 <i class="bi bi-arrow-down-up"></i> Lihat Peminjaman
             </a>
+            <a href="{{ route('admin.log.index') }}"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition">
+                <i class="bi bi-journal-text"></i> Log Aktivitas
+            </a>
             <a href="{{ route('admin.user.index') }}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-xl transition">
                 <i class="bi bi-people-fill"></i> Kelola User
@@ -96,49 +100,6 @@
             <p class="text-xs text-slate-400 font-medium">Terlambat</p>
         </div>
     </a>
-</div>
-
-{{-- Log Aktivitas --}}
-<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <i class="bi bi-journal-text"></i>
-            </div>
-            <div>
-                <h3 class="text-sm font-bold text-slate-800">Log Aktivitas Terbaru</h3>
-                <p class="text-xs text-slate-400">Riwayat aksi pengguna pada sistem.</p>
-            </div>
-        </div>
-        <span class="text-xs text-slate-400">20 terbaru</span>
-    </div>
-
-    <div class="divide-y divide-slate-50">
-        @forelse($logs as $log)
-            <div class="flex items-start gap-4 px-5 py-3.5 hover:bg-slate-50/60 transition">
-                {{-- Avatar --}}
-                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                    {{ strtoupper(substr($log->user->name ?? 'S', 0, 1)) }}
-                </div>
-                {{-- Konten --}}
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs text-slate-700 leading-relaxed">
-                        <span class="font-semibold text-slate-900">{{ $log->user->name ?? 'Sistem' }}</span>
-                        — {{ $log->aktivitas }}
-                    </p>
-                    <p class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                        <i class="bi bi-clock"></i>
-                        {{ \Carbon\Carbon::parse($log->created_at)->format('d M Y, H:i') }}
-                    </p>
-                </div>
-            </div>
-        @empty
-            <div class="py-16 text-center text-slate-400">
-                <i class="bi bi-inbox text-4xl block mb-3 text-slate-200"></i>
-                <p class="text-sm">Belum ada log aktivitas.</p>
-            </div>
-        @endforelse
-    </div>
 </div>
 
 @endsection

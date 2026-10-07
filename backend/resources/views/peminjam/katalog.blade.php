@@ -62,6 +62,15 @@
 <form action="{{ route('peminjam.peminjaman.ajukan') }}" method="POST" id="form-pinjam">
     @csrf
 
+    {{-- Error validasi --}}
+    @if ($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
+            @foreach ($errors->all() as $e)
+                <div>{{ $e }}</div>
+            @endforeach
+        </div>
+    @endif
+
     {{-- Tanggal --}}
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-6">
         <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
@@ -70,21 +79,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1.5">Tanggal Pinjam</label>
-                <input type="date" name="tgl_pinjam" value="{{ date('Y-m-d') }}"
+                <input type="date" name="tgl_pinjam" value="{{ old('tgl_pinjam', date('Y-m-d')) }}"
                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1.5">Rencana Tanggal Kembali</label>
-                <input type="date" name="tgl_kembali_plan"
+                <input type="date" name="tgl_kembali_plan" value="{{ old('tgl_kembali_plan') }}"
                     class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required>
             </div>
         </div>
     </div>
 
-    {{-- Keranjang Pilihan (floating counter) --}}
-    <div id="cart-bar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 text-sm font-semibold">
+    {{-- Keranjang Pilihan (floating bar, di kanan bawah, muncul setelah ada alat dipilih) --}}
+    <div id="cart-bar" class="hidden fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl items-center gap-4 text-sm font-semibold">
         <i class="bi bi-cart3 text-indigo-400 text-lg"></i>
-        <span id="cart-count">0</span> alat dipilih
+        <span><span id="cart-count">0</span> alat dipilih</span>
         <button type="submit"
             class="ml-2 px-4 py-1.5 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold rounded-xl transition">
             <i class="bi bi-send-fill me-1"></i> Ajukan
@@ -99,7 +108,7 @@
         </h3>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-24">
         @forelse($alats as $alat)
             <div class="alat-card bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden"
                  id="card-{{ $alat->id }}">
@@ -149,6 +158,7 @@
                                 <div class="relative">
                                     <input type="checkbox" name="alat_id[]" value="{{ $alat->id }}"
                                            id="alat-{{ $alat->id }}"
+                                           {{ in_array($alat->id, old('alat_id', [])) ? 'checked' : '' }}
                                            onchange="toggleCard(this)"
                                            class="sr-only peer">
                                     <div class="w-5 h-5 rounded-lg border-2 border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 flex items-center justify-center transition">
@@ -156,7 +166,8 @@
                                     </div>
                                 </div>
                                 <span class="text-xs font-semibold text-slate-600 group-hover:text-indigo-600 transition flex-1">Pilih Alat Ini</span>
-                                <input type="number" name="jumlah[]" value="1" min="1" max="{{ $alat->stok }}"
+                                {{-- name pakai id alat supaya jumlah cocok dengan alat yang dipilih --}}
+                                <input type="number" name="jumlah[{{ $alat->id }}]" value="{{ old('jumlah.' . $alat->id, 1) }}" min="1" max="{{ $alat->stok }}"
                                        id="jumlah-{{ $alat->id }}"
                                        onclick="event.preventDefault()"
                                        class="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -180,15 +191,6 @@
             </div>
         @endforelse
     </div>
-
-    @if(count($alats) > 0)
-        <div class="flex justify-end">
-            <button type="submit"
-                class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-2xl shadow-lg shadow-indigo-200 transition">
-                <i class="bi bi-send-fill"></i> Kirim Pengajuan Peminjaman
-            </button>
-        </div>
-    @endif
 </form>
 
 <script>
@@ -218,5 +220,8 @@ function updateCartBar() {
         bar.classList.remove('flex');
     }
 }
+
+// Pulihkan tampilan pilihan setelah form gagal dikirim (old input)
+document.querySelectorAll('input[name="alat_id[]"]:checked').forEach(toggleCard);
 </script>
 @endsection

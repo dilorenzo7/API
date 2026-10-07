@@ -69,15 +69,30 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 @forelse($alatTersedia as $alat)
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
-                        <span class="inline-block px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold mb-2">
-                            {{ $alat->kategori->nama_kategori ?? 'Umum' }}
-                        </span>
-                        <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">{{ $alat->nama_alat }}</h4>
-                        <p class="text-xs text-slate-400 mb-3">Sisa Stok: <span class="font-semibold text-slate-700">{{ $alat->stok }}</span></p>
-                        <a href="{{ route('peminjam.katalog') }}" class="block text-center w-full py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-semibold rounded-lg transition">
-                            Pinjam
-                        </a>
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+
+                        {{-- Gambar / Placeholder --}}
+                        @if($alat->gambar)
+                            <div class="h-28 bg-slate-100 overflow-hidden">
+                                <img src="{{ asset('storage/' . $alat->gambar) }}" alt="{{ $alat->nama_alat }}"
+                                     class="w-full h-full object-cover">
+                            </div>
+                        @else
+                            <div class="h-28 bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center text-indigo-300 text-4xl">
+                                <i class="bi bi-tools"></i>
+                            </div>
+                        @endif
+
+                        <div class="p-4 flex flex-col flex-1">
+                            <span class="inline-block self-start px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold mb-2">
+                                {{ $alat->kategori->nama_kategori ?? 'Umum' }}
+                            </span>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">{{ $alat->nama_alat }}</h4>
+                            <p class="text-xs text-slate-400 mb-3">Sisa Stok: <span class="font-semibold text-slate-700">{{ $alat->stok }}</span></p>
+                            <a href="{{ route('peminjam.katalog') }}" class="mt-auto block text-center w-full py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white text-xs font-semibold rounded-lg transition">
+                                Pinjam
+                            </a>
+                        </div>
                     </div>
                 @empty
                     <div class="col-span-full bg-white p-6 rounded-2xl text-center text-slate-400 text-sm">

@@ -102,11 +102,19 @@
                             </div>
                         </div>
 
-                        {{-- Daftar Alat --}}
+                        {{-- Daftar Alat (dengan thumbnail) --}}
                         <div class="flex flex-wrap gap-2 ml-13">
                             @foreach($item->detailPinjam as $detail)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700 font-medium">
-                                    <i class="bi bi-tools text-slate-400 text-[10px]"></i>
+                                <span class="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-700 font-medium">
+                                    @if($detail->alat && $detail->alat->gambar)
+                                        <img src="{{ asset('storage/' . $detail->alat->gambar) }}"
+                                             alt="{{ $detail->alat->nama_alat }}"
+                                             class="w-8 h-8 rounded-lg object-cover bg-slate-100 shrink-0">
+                                    @else
+                                        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center text-indigo-300 shrink-0">
+                                            <i class="bi bi-tools text-sm"></i>
+                                        </span>
+                                    @endif
                                     {{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}
                                     <span class="text-slate-400">({{ $detail->jumlah }})</span>
                                 </span>

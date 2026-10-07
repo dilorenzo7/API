@@ -8,6 +8,7 @@ use App\Models\Peminjaman;
 use App\Models\DetailPinjam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PeminjamController extends Controller
 {
@@ -23,14 +24,12 @@ class PeminjamController extends Controller
         $totalSelesai        = Peminjaman::where('user_id', $user->id)
                                 ->whereIn('status', ['dikembalikan', 'telat'])->count();
 
-        // 5 peminjaman terbaru
         $peminjamanTerbaru = Peminjaman::with(['detailPinjam.alat', 'pengembalian'])
             ->where('user_id', $user->id)
             ->latest()
             ->take(5)
             ->get();
 
-        // Preview 6 alat tersedia
         $alatTersedia = Alat::with('kategori')
             ->where('stok', '>', 0)
             ->take(6)
@@ -59,10 +58,13 @@ class PeminjamController extends Controller
         $alats = Alat::with('kategori')
             ->where('stok', '>', 0)
             ->when($search, function ($q) use ($search) {
-                $q->where('nama_alat', 'like', "%{$search}%")
-                  ->orWhereHas('kategori', function ($q2) use ($search) {
-                      $q2->where('nama_kategori', 'like', "%{$search}%");
-                  });
+                // dibungkus supaya orWhere tidak merusak filter stok
+                $q->where(function ($q1) use ($search) {
+                    $q1->where('nama_alat', 'like', "%{$search}%")
+                       ->orWhereHas('kategori', function ($q2) use ($search) {
+                           $q2->where('nama_kategori', 'like', "%{$search}%");
+                       });
+                });
             })
             ->when($kategoriId, function ($q) use ($kategoriId) {
                 $q->where('kategori_id', $kategoriId);
@@ -76,6 +78,8 @@ class PeminjamController extends Controller
 
     public function ajukanPeminjaman(Request $request)
     {
+        Log::info('ajukan dipanggil', $request->all());
+
         $request->validate([
             'tgl_pinjam'       => 'required|date',
             'tgl_kembali_plan' => 'required|date|after_or_equal:tgl_pinjam',
@@ -83,10 +87,30 @@ class PeminjamController extends Controller
             'alat_id.*'        => 'exists:alat,id',
             'jumlah'           => 'required|array',
             'jumlah.*'         => 'integer|min:1',
+        ], [
+            'alat_id.required' => 'Pilih minimal satu alat.',
+            'alat_id.min'      => 'Pilih minimal satu alat.',
         ]);
 
         DB::beginTransaction();
         try {
+            // Cek stok setiap alat yang dipilih
+            foreach ($request->alat_id as $alatId) {
+                $alat   = Alat::findOrFail($alatId);
+                $jumlah = (int) ($request->jumlah[$alatId] ?? 0);
+
+                if ($jumlah < 1) {
+                    DB::rollBack();
+                    return redirect()->back()->withInput()
+                        ->with('error', "Jumlah alat '{$alat->nama_alat}' tidak valid.");
+                }
+                if ($jumlah > $alat->stok) {
+                    DB::rollBack();
+                    return redirect()->back()->withInput()
+                        ->with('error', "Stok alat '{$alat->nama_alat}' tidak mencukupi. Stok tersedia: {$alat->stok}.");
+                }
+            }
+
             $peminjaman = Peminjaman::create([
                 'user_id'          => auth()->id(),
                 'tgl_pinjam'       => $request->tgl_pinjam,
@@ -94,14 +118,11 @@ class PeminjamController extends Controller
                 'status'           => 'diajukan',
             ]);
 
-            foreach ($request->alat_id as $index => $alatId) {
-                $jumlah = $request->jumlah[$index] ?? null;
-                if (!$jumlah) continue;
-
+            foreach ($request->alat_id as $alatId) {
                 DetailPinjam::create([
                     'peminjaman_id' => $peminjaman->id,
                     'alat_id'       => $alatId,
-                    'jumlah'        => $jumlah,
+                    'jumlah'        => (int) $request->jumlah[$alatId],
                 ]);
             }
 
@@ -109,8 +130,9 @@ class PeminjamController extends Controller
             return redirect()->route('peminjam.riwayat')
                 ->with('success', 'Pengajuan peminjaman berhasil dikirim. Tunggu persetujuan petugas.');
         } catch (\Exception $e) {
-            DB::rollback();
-            return redirect()->back()
+            DB::rollBack();
+            Log::error('Ajukan peminjaman gagal: ' . $e->getMessage());
+            return redirect()->back()->withInput()
                 ->with('error', 'Gagal mengajukan peminjaman: ' . $e->getMessage());
         }
     }
@@ -120,14 +142,21 @@ class PeminjamController extends Controller
     public function riwayatPeminjaman(Request $request)
     {
         $status = $request->input('status');
+        $search = $request->input('search');
 
         $riwayat = Peminjaman::with(['detailPinjam.alat', 'pengembalian'])
             ->where('user_id', auth()->id())
             ->when($status, function ($q) use ($status) {
                 $q->where('status', $status);
             })
+            ->when($search, function ($q) use ($search) {
+                $q->whereHas('detailPinjam.alat', function ($q2) use ($search) {
+                    $q2->where('nama_alat', 'like', "%{$search}%");
+                });
+            })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('peminjam.riwayat', compact('riwayat', 'status'));
     }

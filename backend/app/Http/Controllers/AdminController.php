@@ -16,10 +16,9 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    // Halaman dashboard admin: ringkasan + log aktivitas terbaru
+    // Halaman dashboard admin: hanya ringkasan statistik (tanpa log aktivitas)
     public function index()
     {
-        $logs             = LogAktivitas::with('user')->latest()->take(20)->get();
         $totalAlat        = Alat::count();
         $totalUser        = User::count();
         $totalPeminjaman  = Peminjaman::where('status', 'dipinjam')->count();
@@ -28,9 +27,30 @@ class AdminController extends Controller
         $totalKategori    = Kategori::count();
 
         return view('admin.dashboard', compact(
-            'logs', 'totalAlat', 'totalUser',
+            'totalAlat', 'totalUser',
             'totalPeminjaman', 'pendingApproval', 'totalTerlambat', 'totalKategori'
         ));
+    }
+
+    // Halaman log aktivitas (terpisah dari dashboard)
+    public function indexLog(Request $request)
+    {
+        $search = $request->input('search');
+
+        $logs = LogAktivitas::with('user')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('aktivitas', 'like', "%{$search}%")
+                      ->orWhereHas('user', function ($u) use ($search) {
+                          $u->where('name', 'like', "%{$search}%");
+                      });
+                });
+            })
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.log.index', compact('logs', 'search'));
     }
 
     // FITUR KELOLA USER

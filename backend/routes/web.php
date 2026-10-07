@@ -51,6 +51,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/pengembalian/{id}/create', [AdminController::class, 'createPengembalian'])->name('pengembalian.create');
     Route::post('/pengembalian/{id}', [AdminController::class, 'storePengembalian'])->name('pengembalian.store');
     Route::delete('/pengembalian/{id}', [AdminController::class, 'destroyPengembalian'])->name('pengembalian.destroy');
+
+    // Log Aktivitas (halaman terpisah dari dashboard)
+    Route::get('/log-aktivitas', [AdminController::class, 'indexLog'])->name('log.index');
 });
 
 // Group Route: Petugas (Bisa diakses oleh Petugas & Admin)

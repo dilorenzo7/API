@@ -58,6 +58,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // Group Route: Petugas (Bisa diakses oleh Petugas & Admin)
 Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petugas.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [PetugasController::class, 'dashboard'])->name('dashboard');
+
     // Persetujuan Peminjaman
     Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::post('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])->name('peminjaman.setujui');
@@ -91,9 +94,9 @@ Route::middleware('guest')->group(function () {
 
 // Route Profil (Semua role yang sudah login)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile',             [AuthController::class, 'showProfile'])->name('profile.show');
-    Route::put('/profile/foto',        [AuthController::class, 'updateFoto'])->name('profile.updateFoto');
-    Route::delete('/profile/foto',     [AuthController::class, 'destroyFoto'])->name('profile.destroyFoto');
+    Route::get('/profile',         [AuthController::class, 'showProfile'])->name('profile.show');
+    Route::put('/profile/foto',    [AuthController::class, 'updateFoto'])->name('profile.updateFoto');
+    Route::delete('/profile/foto', [AuthController::class, 'destroyFoto'])->name('profile.destroyFoto');
 });
 
 // Route Logout (Harus sudah login)

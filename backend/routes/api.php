@@ -32,8 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alat/{alat}', [AlatController::class, 'show']);
 
     // Peminjaman — semua role login; peminjam hanya bisa akses data miliknya (dicek di controller)
-    Route::get('/peminjaman',              [PeminjamanController::class, 'index']);
-    Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
+    Route::get('/peminjaman',                 [PeminjamanController::class, 'index']);
+    Route::get('/peminjaman/{peminjaman}',    [PeminjamanController::class, 'show']);
     Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy']);
 
     // ─── Admin only ───────────────────────────────────────────────────────────

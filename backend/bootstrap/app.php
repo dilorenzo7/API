@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsPetugas;
 use App\Http\Middleware\IsPeminjam;
@@ -15,12 +16,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-       $middleware->alias([
-            'role.admin' => IsAdmin::class,
+        $middleware->alias([
+            'role.admin'   => IsAdmin::class,
             'role.petugas' => IsPetugas::class,
             'role.peminjam' => IsPeminjam::class,
-            'role' => \App\Http\Middleware\CheckRole::class,
-       ]);
+            'role'         => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        // Kalau sudah login lalu membuka halaman guest (misal /login),
+        // arahkan ke dashboard sesuai role
+        $middleware->redirectUsersTo(function (Request $request) {
+            return match ($request->user()?->role) {
+                'admin'   => route('admin.dashboard'),
+                'petugas' => route('petugas.dashboard'),
+                default   => route('peminjam.dashboard'),
+            };
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

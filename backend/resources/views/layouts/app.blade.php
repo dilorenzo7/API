@@ -101,7 +101,13 @@
 
             @elseif($role === 'petugas')
             {{-- ─── PETUGAS MENU ─── --}}
-                <p class="px-3 pt-2 pb-1.5 text-[9px] font-bold tracking-widest text-slate-600 uppercase">Persetujuan</p>
+                <p class="px-3 pt-2 pb-1.5 text-[9px] font-bold tracking-widest text-slate-600 uppercase">Utama</p>
+                <a href="{{ route('petugas.dashboard') }}"
+                   class="sidebar-link {{ request()->routeIs('petugas.dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-1x2-fill text-base"></i> Dashboard
+                </a>
+
+                <p class="px-3 pt-4 pb-1.5 text-[9px] font-bold tracking-widest text-slate-600 uppercase">Persetujuan</p>
                 <a href="{{ route('petugas.peminjaman.index') }}"
                    class="sidebar-link {{ request()->routeIs('petugas.peminjaman.*') ? 'active' : '' }}">
                     <i class="bi bi-clipboard-check-fill text-base"></i> Persetujuan Pinjam
@@ -192,19 +198,19 @@
 
 
     {{-- ══════════════════ MAIN CONTENT ══════════════════ --}}
-        <main class="flex-1 min-w-0 p-4 md:p-8">
-            @yield('content')
-        </main>
+    <main class="flex-1 min-w-0 p-4 md:p-8">
+        @yield('content')
+    </main>
 
-        <script>
-            function toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                sidebar.classList.toggle('-translate-x-full');
-                overlay.classList.toggle('hidden');
-            }
-        </script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
 
-        @stack('scripts')
-    </body>
-    </html>
+    @stack('scripts')
+</body>
+</html>

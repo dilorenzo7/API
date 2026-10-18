@@ -19,28 +19,29 @@ Route::post('/login',    [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth
-    Route::get('/me',       [AuthController::class, 'me']);
-    Route::post('/logout',  [AuthController::class, 'logout']);
+    Route::get('/me',      [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Profile — bisa diakses semua role yang sudah login
-    Route::get('/profile',              [ProfileController::class, 'show']);
-    Route::post('/profile/foto',        [ProfileController::class, 'uploadFoto']);
-    Route::delete('/profile/foto',      [ProfileController::class, 'destroyFoto']);
+    // Profile — semua role yang sudah login
+    Route::get('/profile',         [ProfileController::class, 'show']);
+    Route::post('/profile/foto',   [ProfileController::class, 'uploadFoto']);
+    Route::delete('/profile/foto', [ProfileController::class, 'destroyFoto']);
 
-    // Alat — bisa diakses semua role yang sudah login (peminjam butuh lihat katalog)
-    Route::get('/alat',       [AlatController::class, 'index']);
+    // Alat (baca) — semua role yang sudah login (peminjam butuh lihat katalog)
+    Route::get('/alat',        [AlatController::class, 'index']);
     Route::get('/alat/{alat}', [AlatController::class, 'show']);
+
+    // Peminjaman — semua role login; peminjam hanya bisa akses data miliknya (dicek di controller)
+    Route::get('/peminjaman',              [PeminjamanController::class, 'index']);
+    Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
+    Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy']);
 
     // ─── Admin only ───────────────────────────────────────────────────────────
     Route::middleware('role.admin')->group(function () {
-
-        // Manajemen User
         Route::apiResource('users', UserController::class);
-
-        // Manajemen Kategori
         Route::apiResource('kategori', KategoriController::class);
 
-        // Manajemen Alat (write operations)
+        // Manajemen Alat (write)
         Route::post('/alat',          [AlatController::class, 'store']);
         Route::put('/alat/{alat}',    [AlatController::class, 'update']);
         Route::patch('/alat/{alat}',  [AlatController::class, 'update']);
@@ -49,51 +50,30 @@ Route::middleware('auth:sanctum')->group(function () {
         // Log Aktivitas
         Route::get('/log-aktivitas', [LogAktivitasController::class, 'index']);
 
-        // Laporan
-        Route::get('/laporan-peminjaman', [LaporanController::class, 'index']);
-
-        // Semua peminjaman (admin bisa lihat semua)
-        Route::get('/peminjaman',              [PeminjamanController::class, 'index']);
-        Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
-        Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy']);
-
-        // Semua pengembalian
-        Route::apiResource('pengembalian', PengembalianController::class);
+        // Hapus data pengembalian
+        Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy']);
     });
 
-    // ─── Petugas only ─────────────────────────────────────────────────────────
-    Route::middleware('role.petugas')->group(function () {
-
-        // Lihat daftar pengajuan peminjaman
-        Route::get('/peminjaman',              [PeminjamanController::class, 'index']);
-        Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
-
+    // ─── Admin & Petugas ──────────────────────────────────────────────────────
+    Route::middleware('role:admin,petugas')->group(function () {
         // Setujui / Tolak peminjaman
         Route::post('/peminjaman/{peminjaman}/setujui', [PeminjamanController::class, 'setujui']);
         Route::delete('/peminjaman/{peminjaman}/tolak', [PeminjamanController::class, 'tolak']);
 
-        // Proses pengembalian
-        Route::post('/pengembalian',                    [PengembalianController::class, 'store']);
-        Route::get('/pengembalian',                     [PengembalianController::class, 'index']);
-        Route::get('/pengembalian/{pengembalian}',      [PengembalianController::class, 'show']);
-        Route::put('/pengembalian/{pengembalian}',      [PengembalianController::class, 'update']);
-        Route::patch('/pengembalian/{pengembalian}',    [PengembalianController::class, 'update']);
+        // Pengembalian
+        Route::get('/pengembalian',                  [PengembalianController::class, 'index']);
+        Route::post('/pengembalian',                 [PengembalianController::class, 'store']);
+        Route::get('/pengembalian/{pengembalian}',   [PengembalianController::class, 'show']);
+        Route::put('/pengembalian/{pengembalian}',   [PengembalianController::class, 'update']);
+        Route::patch('/pengembalian/{pengembalian}', [PengembalianController::class, 'update']);
 
-        // Laporan (petugas juga bisa akses)
+        // Laporan
         Route::get('/laporan-peminjaman', [LaporanController::class, 'index']);
     });
 
     // ─── Peminjam only ────────────────────────────────────────────────────────
     Route::middleware('role.peminjam')->group(function () {
-
         // Ajukan peminjaman baru
         Route::post('/peminjaman', [PeminjamanController::class, 'store']);
-
-        // Lihat riwayat peminjaman sendiri
-        Route::get('/peminjaman',              [PeminjamanController::class, 'index']);
-        Route::get('/peminjaman/{peminjaman}', [PeminjamanController::class, 'show']);
-
-        // Batalkan peminjaman yang masih "diajukan"
-        Route::delete('/peminjaman/{peminjaman}', [PeminjamanController::class, 'destroy']);
     });
 });

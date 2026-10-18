@@ -13,11 +13,30 @@ use Illuminate\Support\Facades\DB;
 
 class PeminjamanController extends Controller
 {
+    // Peminjam hanya boleh mengakses peminjaman miliknya sendiri
+    private function bukanPemilik(Peminjaman $peminjaman): ?JsonResponse
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'peminjam' && $peminjaman->user_id !== $user->id) {
+            return response()->json([
+                'message' => 'Anda tidak berhak mengakses peminjaman ini.',
+            ], 403);
+        }
+
+        return null;
+    }
+
     public function index(): JsonResponse
     {
-        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])
-            ->latest()
-            ->get();
+        $query = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])->latest();
+
+        // Peminjam hanya melihat riwayatnya sendiri
+        if (auth()->user()->role === 'peminjam') {
+            $query->where('user_id', auth()->id());
+        }
+
+        $peminjamans = $query->get();
 
         return response()->json([
             'message'    => 'Data peminjaman berhasil diambil.',
@@ -76,6 +95,10 @@ class PeminjamanController extends Controller
 
     public function show(Peminjaman $peminjaman): JsonResponse
     {
+        if ($tolak = $this->bukanPemilik($peminjaman)) {
+            return $tolak;
+        }
+
         $peminjaman->load(['user', 'detailPinjam.alat', 'pengembalian.petugas']);
 
         return response()->json([
@@ -86,6 +109,10 @@ class PeminjamanController extends Controller
 
     public function destroy(Peminjaman $peminjaman): JsonResponse
     {
+        if ($tolak = $this->bukanPemilik($peminjaman)) {
+            return $tolak;
+        }
+
         if ($peminjaman->status !== 'diajukan') {
             return response()->json([
                 'message' => 'Hanya peminjaman dengan status "diajukan" yang dapat dibatalkan.',

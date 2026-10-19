@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'admin'   => route('admin.dashboard'),
                 'petugas' => route('petugas.dashboard'),
                 default   => route('peminjam.dashboard'),
-            };
+            }; 
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

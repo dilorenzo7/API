@@ -81,6 +81,15 @@
                     'telat'        => ['bg-red-50 text-red-700 border-red-200',          'bi-clock-fill',       'Terlambat',            'bg-red-500'],
                 ];
                 [$sCls, $sIcon, $sLabel, $sDot] = $statusConfig[$item->status] ?? ['bg-slate-100 text-slate-600 border-slate-200', 'bi-dash', ucfirst($item->status), 'bg-slate-400'];
+
+                // Alat masih dipinjam & belum tercatat dikembalikan oleh petugas
+                $masihDipinjam     = in_array($item->status, ['dipinjam', 'telat']) && !$item->pengembalian;
+                $menungguKembali   = $masihDipinjam && $item->tgl_ajukan_kembali;   // sudah klik "Ajukan Pengembalian"
+                $bisaAjukanKembali = $masihDipinjam && !$item->tgl_ajukan_kembali;  // belum klik
+
+                if ($menungguKembali) {
+                    [$sCls, $sIcon, $sLabel, $sDot] = ['bg-amber-50 text-amber-700 border-amber-200', 'bi-hourglass-split', 'Menunggu Konfirmasi Pengembalian', 'bg-amber-500'];
+                }
             @endphp
 
             <div class="p-5 hover:bg-slate-50/60 transition">
@@ -146,15 +155,35 @@
 
                         {{-- Tombol Batalkan (hanya jika diajukan) --}}
                         @if($item->status === 'diajukan')
-                            <form action="{{ route('peminjam.riwayat') }}" method="POST"
+                            <form action="{{ route('peminjam.peminjaman.batal', $item->id) }}" method="POST"
                                   onsubmit="return confirm('Batalkan pengajuan peminjaman ini?')">
-                                @csrf @method('DELETE')
-                                <input type="hidden" name="peminjaman_id" value="{{ $item->id }}">
+                                @csrf
+                                @method('DELETE')
                                 <button type="submit"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-xl transition border border-slate-200 hover:border-red-200">
                                     <i class="bi bi-x-circle"></i> Batalkan
                                 </button>
                             </form>
+                        @endif
+
+                        {{-- Tombol Ajukan Pengembalian (sedang dipinjam / telat, belum diajukan) --}}
+                        @if($bisaAjukanKembali)
+                            <form action="{{ route('peminjam.peminjaman.ajukanPengembalian', $item->id) }}" method="POST"
+                                  onsubmit="return confirm('Ajukan pengembalian alat ini? Pastikan alat siap diserahkan ke petugas.')">
+                                @csrf
+                                <button type="submit"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition shadow-sm">
+                                    <i class="bi bi-arrow-return-left"></i> Ajukan Pengembalian
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Info menunggu konfirmasi petugas --}}
+                        @if($menungguKembali)
+                            <p class="text-[11px] text-slate-400 md:text-right leading-relaxed">
+                                Diajukan {{ $item->tgl_ajukan_kembali->format('d M Y, H:i') }}<br>
+                                Serahkan alat ke petugas untuk dikonfirmasi.
+                            </p>
                         @endif
                     </div>
                 </div>

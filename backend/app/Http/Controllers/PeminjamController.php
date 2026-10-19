@@ -160,4 +160,47 @@ class PeminjamController extends Controller
 
         return view('peminjam.riwayat', compact('riwayat', 'status'));
     }
+
+    // ─── BATALKAN PENGAJUAN PEMINJAMAN ────────────────────────────────────────
+
+    public function batalkanPeminjaman($id)
+    {
+        // Hanya milik user yang login (kalau bukan miliknya → 404)
+        $peminjaman = Peminjaman::where('user_id', auth()->id())->findOrFail($id);
+
+        if ($peminjaman->status !== 'diajukan') {
+            return redirect()->back()->with('error', 'Hanya peminjaman berstatus "diajukan" yang bisa dibatalkan.');
+        }
+
+        $peminjaman->delete();
+
+        return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan peminjaman berhasil dibatalkan.');
+    }
+
+    // ─── AJUKAN PENGEMBALIAN ──────────────────────────────────────────────────
+
+    public function ajukanPengembalian($id)
+    {
+        // Hanya milik user yang login (kalau bukan miliknya → 404)
+        $peminjaman = Peminjaman::with('pengembalian')
+            ->where('user_id', auth()->id())
+            ->findOrFail($id);
+
+        if (!in_array($peminjaman->status, ['dipinjam', 'telat'])) {
+            return redirect()->back()->with('error', 'Hanya peminjaman yang sedang dipinjam yang bisa diajukan pengembaliannya.');
+        }
+
+        if ($peminjaman->pengembalian) {
+            return redirect()->back()->with('error', 'Peminjaman ini sudah dikembalikan.');
+        }
+
+        if ($peminjaman->tgl_ajukan_kembali) {
+            return redirect()->back()->with('error', 'Permintaan pengembalian sudah dikirim. Tunggu konfirmasi petugas.');
+        }
+
+        $peminjaman->update(['tgl_ajukan_kembali' => now()]);
+
+        return redirect()->route('peminjam.riwayat')
+            ->with('success', 'Permintaan pengembalian terkirim. Serahkan alat ke petugas dan tunggu konfirmasi.');
+    }
 }

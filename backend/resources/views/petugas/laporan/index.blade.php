@@ -67,14 +67,14 @@
         </div>
     </div>
 
-    {{-- Tombol cetak --}}
+         {{-- Tombol cetak --}}
     <div class="flex justify-end mb-4 no-print">
         <button onclick="cetakLaporan()"
             class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2 rounded-lg transition flex items-center gap-2">
             🖨️ Cetak / Simpan PDF
         </button>
     </div>
-
+    
     {{-- AREA UTAMA LAPORAN --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" id="area-cetak">
 

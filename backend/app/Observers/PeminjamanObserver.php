@@ -18,6 +18,13 @@ class PeminjamanObserver
 
     public function updated(Peminjaman $peminjaman): void
     {
+        if ($peminjaman->wasChanged('tgl_ajukan_kembali') && $peminjaman->tgl_ajukan_kembali) {
+            LogAktivitas::create([
+                'user_id'   => Auth::id() ?? $peminjaman->user_id,
+                'aktivitas' => "Mengajukan pengembalian peminjaman ID: {$peminjaman->id}.",
+            ]);
+        }
+
         if ($peminjaman->wasChanged('status')) {
             $statusLama = $peminjaman->getOriginal('status');
             $statusBaru = $peminjaman->status;

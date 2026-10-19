@@ -17,13 +17,18 @@
     @endif
 
     {{-- Header Banner --}}
-    @php $jumlahTerlambat = $peminjamans->where('hari_terlambat', '>', 0)->count(); @endphp
+    @php
+        $jumlahTerlambat  = $peminjamans->where('hari_terlambat', '>', 0)->count();
+        $jumlahPermintaan = $peminjamans->whereNotNull('tgl_ajukan_kembali')->count();
+    @endphp
     <div class="mb-8 p-6 md:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden
         {{ $jumlahTerlambat > 0 ? 'bg-gradient-to-r from-red-500 to-red-700 shadow-red-200' : 'bg-gradient-to-r from-indigo-600 to-indigo-800 shadow-indigo-200' }}">
         <div class="relative z-10">
             <h2 class="text-2xl md:text-3xl font-bold mb-2">Proses Pengembalian</h2>
             <p class="text-white/80 text-sm max-w-xl">
-                @if($jumlahTerlambat > 0)
+                @if($jumlahPermintaan > 0)
+                    Ada <strong>{{ $jumlahPermintaan }} permintaan pengembalian</strong> dari peminjam yang menunggu konfirmasi kamu.
+                @elseif($jumlahTerlambat > 0)
                     Perhatian! Ada <strong>{{ $jumlahTerlambat }} peminjaman</strong> yang melewati batas pengembalian.
                 @else
                     Semua peminjaman masih dalam batas waktu. Proses pengembalian di sini.
@@ -34,7 +39,7 @@
     </div>
 
     {{-- Stats --}}
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
                 <p class="text-xs font-medium text-slate-400 mb-1">Sedang Dipinjam</p>
@@ -42,6 +47,15 @@
             </div>
             <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
                 <i class="bi bi-box-seam"></i>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium text-slate-400 mb-1">Permintaan Kembali</p>
+                <h3 class="text-2xl font-bold text-amber-600">{{ $jumlahPermintaan }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="bi bi-bell-fill"></i>
             </div>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
@@ -68,15 +82,22 @@
     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-base font-bold text-slate-800">Daftar Alat Sedang Dipinjam</h3>
-            @if($jumlahTerlambat > 0)
-                <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">
-                    {{ $jumlahTerlambat }} Terlambat
-                </span>
-            @else
-                <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">
-                    {{ $peminjamans->count() }} Sedang Dipinjam
-                </span>
-            @endif
+            <div class="flex items-center gap-2">
+                @if($jumlahPermintaan > 0)
+                    <span class="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full">
+                        {{ $jumlahPermintaan }} Minta Kembali
+                    </span>
+                @endif
+                @if($jumlahTerlambat > 0)
+                    <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full">
+                        {{ $jumlahTerlambat }} Terlambat
+                    </span>
+                @else
+                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">
+                        {{ $peminjamans->count() }} Sedang Dipinjam
+                    </span>
+                @endif
+            </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -95,13 +116,19 @@
                 <tbody>
                     @forelse($peminjamans as $i => $peminjaman)
                         <tr class="hover:bg-slate-50 transition align-top border-b border-slate-50
-                            {{ $peminjaman->hari_terlambat > 0 ? 'bg-red-50/40' : '' }}">
+                            {{ $peminjaman->hari_terlambat > 0 ? 'bg-red-50/40' : ($peminjaman->tgl_ajukan_kembali ? 'bg-amber-50/50' : '') }}">
 
                             <td class="py-4 px-5 text-xs text-slate-400">{{ $i + 1 }}</td>
 
                             <td class="py-4 px-5">
                                 <p class="font-semibold text-slate-800 text-sm">{{ $peminjaman->user->name ?? '-' }}</p>
                                 <p class="text-xs text-slate-400">{{ $peminjaman->user->no_hp ?? '-' }}</p>
+                                @if($peminjaman->tgl_ajukan_kembali)
+                                    <span class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold rounded-full">
+                                        <i class="bi bi-bell-fill"></i>
+                                        Minta kembali · {{ $peminjaman->tgl_ajukan_kembali->format('d M, H:i') }}
+                                    </span>
+                                @endif
                             </td>
 
                             <td class="py-4 px-5">
@@ -136,7 +163,8 @@
                             <td class="py-4 px-5">
                                 <button onclick="toggleForm('form-kembali-{{ $peminjaman->id }}')"
                                     class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition w-full">
-                                    <i class="bi bi-arrow-return-left me-1"></i> Proses Kembali
+                                    <i class="bi bi-arrow-return-left me-1"></i>
+                                    {{ $peminjaman->tgl_ajukan_kembali ? 'Terima Pengembalian' : 'Proses Kembali' }}
                                 </button>
 
                                 <div id="form-kembali-{{ $peminjaman->id }}" class="hidden mt-3">

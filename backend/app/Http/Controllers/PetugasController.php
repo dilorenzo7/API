@@ -172,10 +172,13 @@ class PetugasController extends Controller
 
     public function indexPengembalian()
     {
-        // Tampilkan peminjaman yang sedang dipinjam / telat dan BELUM punya record pengembalian
+        // Tampilkan peminjaman yang sedang dipinjam / telat dan BELUM punya record pengembalian.
+        // Yang peminjamnya sudah mengajukan pengembalian ditaruh paling atas.
         $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat'])
             ->whereIn('status', ['dipinjam', 'telat'])
             ->whereDoesntHave('pengembalian')
+            ->orderByRaw('tgl_ajukan_kembali IS NULL')
+            ->orderBy('tgl_ajukan_kembali')
             ->latest()
             ->get()
             ->map(function ($p) {

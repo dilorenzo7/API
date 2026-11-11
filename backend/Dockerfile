@@ -9,3 +9,4 @@ COPY --from=composer:latest /usr/bin//composer /usr/bin/composer
 
 # 4. Tetapkan direktori kerja utama di dalam container
 WORKDIR /var/www
+

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,47 @@ class AuthController extends Controller
     public function showLoginForm()
     {
         return view('auth.login');
+    }
+
+    // Menampilkan Form Register
+    public function showRegisterForm()
+    {
+        return view('auth.register');
+    }
+
+    // Memproses Register (khusus peminjam)
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name'     => ['required', 'string', 'max:100'],
+            'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
+            'no_hp'    => ['required', 'regex:/^(\+62|62|0)8[0-9]{8,12}$/'],
+            'alamat'   => ['required', 'string', 'max:500'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'name.required'      => 'Username wajib diisi.',
+            'email.required'     => 'Email wajib diisi.',
+            'email.email'        => 'Format email tidak valid.',
+            'email.unique'       => 'Email sudah terdaftar.',
+            'no_hp.required'     => 'No. telepon wajib diisi.',
+            'no_hp.regex'        => 'Format no. telepon tidak valid (contoh: 081234567890).',
+            'alamat.required'    => 'Alamat wajib diisi.',
+            'password.required'  => 'Password wajib diisi.',
+            'password.min'       => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+        ]);
+
+        User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'no_hp'    => $data['no_hp'],
+            'alamat'   => $data['alamat'],
+            'password' => $data['password'], // otomatis di-hash oleh cast 'hashed'
+            'role'     => 'peminjam',        // dipaksa, tidak dari input form
+        ]);
+
+        return redirect()->route('login')
+            ->with('success', 'Registrasi berhasil! Silakan login.');
     }
 
     // Memproses Login
@@ -27,7 +69,6 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Redirect berdasarkan Role sesuai matriks Anda
             if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->role === 'petugas') {
@@ -75,12 +116,10 @@ class AuthController extends Controller
 
         $user = auth()->user();
 
-        // Hapus foto lama jika ada
         if ($user->foto_profile) {
             Storage::disk('public')->delete($user->foto_profile);
         }
 
-        // Simpan foto baru
         $path = $request->file('foto_profile')->store('foto_profile', 'public');
         $user->update(['foto_profile' => $path]);
 

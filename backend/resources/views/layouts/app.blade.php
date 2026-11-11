@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Sistem Peminjaman Alat') — PinjamAlat</title>
-
+        <title>@yield('title', 'Sistem Peminjaman Alat') — PiLat</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/pilat-logo.svg') }}">
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,13 +39,11 @@
            class="w-full md:w-64 bg-slate-900 text-white shrink-0 flex flex-col min-h-screen
                   fixed md:static inset-y-0 left-0 z-40 -translate-x-full md:translate-x-0 transition-transform duration-300">
 
-        {{-- Brand --}}
+                   {{-- Brand --}}
         <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
-            <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-                <i class="bi bi-box-seam-fill text-lg"></i>
-            </div>
+            <img src="{{ asset('images/pilat-logo.svg') }}" alt="PiLat" class="w-10 h-10 rounded-xl shadow-lg shadow-indigo-500/30">
             <div>
-                <h1 class="font-extrabold text-base leading-tight tracking-tight">PinjamAlat</h1>
+                <h1 class="font-extrabold text-base leading-tight tracking-tight">PiLat</h1>
                 <span class="text-[10px] text-slate-400 capitalize font-medium">
                     Portal {{ ucfirst(auth()->user()->role ?? 'Sistem') }}
                 </span>
@@ -185,10 +183,10 @@
 
     {{-- ══════════════════ MOBILE TOPBAR ══════════════════ --}}
     <div class="md:hidden flex items-center justify-between bg-slate-900 text-white px-4 py-3 sticky top-0 z-30">
-        <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-sm">
-                <i class="bi bi-box-seam-fill"></i>
-            </div>
+               <div class="flex items-center gap-2">
+            <img src="{{ asset('images/pilat-logo.svg') }}" alt="PiLat" class="w-7 h-7 rounded-lg">
+            <span class="font-bold text-sm">PiLat</span>
+        </div>
             <span class="font-bold text-sm">PinjamAlat</span>
         </div>
         <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white p-1">

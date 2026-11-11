@@ -129,6 +129,11 @@ class AdminController extends Controller
             'alamat' => 'nullable|string',
         ]);
 
+        // Admin tidak boleh menurunkan role akunnya sendiri
+        if ($user->id === auth()->id() && $request->role !== $user->role) {
+            return back()->withInput()->with('error', 'Anda tidak bisa mengubah role akun sendiri.');
+        }
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
@@ -160,6 +165,19 @@ class AdminController extends Controller
     public function destroyUser($id)
     {
         $user = User::findOrFail($id);
+
+        // Admin tidak boleh menghapus akunnya sendiri
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.user.index')
+                ->with('error', 'Anda tidak bisa menghapus akun sendiri.');
+        }
+
+        // [BARU] User yang masih punya peminjaman berjalan tidak boleh dihapus
+        if ($user->punyaPeminjamanAktif()) {
+            return redirect()->route('admin.user.index')
+                ->with('error', 'User tidak dapat dihapus karena masih memiliki peminjaman yang belum selesai.');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.user.index')->with('success', 'User berhasil dihapus.');
@@ -228,6 +246,12 @@ class AdminController extends Controller
     public function destroyKategori($id)
     {
         $kategori = Kategori::findOrFail($id);
+
+        // [BARU] Ada alat dalam kategori ini yang sedang dipinjam
+        if ($kategori->punyaAlatDipinjam()) {
+            return redirect()->route('admin.kategori.index')
+                ->with('error', 'Kategori tidak dapat dihapus karena ada alat dalam kategori ini yang sedang dipinjam.');
+        }
 
         if ($kategori->alat()->count() > 0) {
             return redirect()->route('admin.kategori.index')
@@ -348,8 +372,15 @@ class AdminController extends Controller
     {
         $alat = Alat::findOrFail($id);
 
-        if ($alat->gambar && file_exists(public_path($alat->gambar))) {
-            unlink(public_path($alat->gambar));
+        // [BARU] Alat yang sedang dipinjam / diajukan tidak boleh dihapus
+        if ($alat->sedangDipinjam()) {
+            return redirect()->route('admin.alat.index')
+                ->with('error', 'Alat tidak dapat dihapus karena sedang dipinjam atau masih dalam pengajuan.');
+        }
+
+        // [BARU] Gambar disimpan di disk "public", jadi dihapus lewat Storage
+        if ($alat->gambar) {
+            Storage::disk('public')->delete($alat->gambar);
         }
 
         $alat->delete();
@@ -569,6 +600,3 @@ class AdminController extends Controller
         return redirect()->route('admin.pengembalian.index')->with('success', 'Data pengembalian berhasil dihapus.');
     }
 }
-
-
-

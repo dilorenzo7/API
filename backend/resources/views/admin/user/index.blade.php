@@ -9,6 +9,12 @@
     </div>
 @endif
 
+@if(session('error'))
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl text-sm flex items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill text-red-500"></i> {{ session('error') }}
+    </div>
+@endif
+
 {{-- Page Header --}}
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
     <div>
@@ -84,7 +90,12 @@
                                     </div>
                                 @endif
                                 <div>
-                                    <p class="font-semibold text-slate-800 text-sm">{{ $user->name }}</p>
+                                    <p class="font-semibold text-slate-800 text-sm">
+                                        {{ $user->name }}
+                                        @if($user->id === auth()->id())
+                                            <span class="ml-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-md">Anda</span>
+                                        @endif
+                                    </p>
                                     @if($user->alamat)
                                         <p class="text-xs text-slate-400 truncate max-w-[160px]">{{ $user->alamat }}</p>
                                     @endif
@@ -117,14 +128,25 @@
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-xl transition">
                                     <i class="bi bi-pencil-fill text-[10px]"></i> Edit
                                 </a>
-                                <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST"
-                                      onsubmit="return confirm('Hapus user \'{{ $user->name }}\'?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-xl transition">
-                                        <i class="bi bi-trash3-fill text-[10px]"></i> Hapus
-                                    </button>
-                                </form>
+
+                                @if($user->id === auth()->id())
+                                    {{-- Akun sendiri: tidak ada tombol Hapus --}}
+                                @elseif($user->punyaPeminjamanAktif())
+                                    {{-- [BARU] Sedang meminjam: tombol Hapus dikunci --}}
+                                    <span title="Tidak bisa dihapus: masih memiliki peminjaman yang belum selesai"
+                                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 text-xs font-semibold rounded-xl cursor-not-allowed">
+                                        <i class="bi bi-lock-fill text-[10px]"></i> Meminjam
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.user.destroy', $user->id) }}" method="POST"
+                                          onsubmit="return confirm('Hapus user \'{{ $user->name }}\'?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-xl transition">
+                                            <i class="bi bi-trash3-fill text-[10px]"></i> Hapus
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

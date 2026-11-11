@@ -53,6 +53,13 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        // Admin tidak boleh mengubah role akunnya sendiri
+        if ($user->id === auth()->id() && isset($data['role']) && $data['role'] !== $user->role) {
+            return response()->json([
+                'message' => 'Anda tidak dapat mengubah role akun Anda sendiri.',
+            ], 422);
+        }
+
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }
@@ -77,6 +84,13 @@ class UserController extends Controller
         if ($user->id === auth()->id()) {
             return response()->json([
                 'message' => 'Anda tidak dapat menghapus akun Anda sendiri.',
+            ], 422);
+        }
+
+        // [BARU] User yang masih punya peminjaman berjalan tidak boleh dihapus
+        if ($user->punyaPeminjamanAktif()) {
+            return response()->json([
+                'message' => 'User tidak dapat dihapus karena masih memiliki peminjaman yang belum selesai.',
             ], 422);
         }
 

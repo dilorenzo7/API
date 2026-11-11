@@ -36,4 +36,12 @@ class User extends Authenticatable
    public function logAktivitas(): HasMany {
         return $this->hasMany(LogAktivitas::class);
    }
+
+   // [BARU] True jika user masih punya peminjaman yang belum selesai
+   public function punyaPeminjamanAktif(): bool
+   {
+        return $this->peminjaman()
+            ->whereIn('status', Peminjaman::STATUS_AKTIF)
+            ->exists();
+   }
 }

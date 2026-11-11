@@ -13,4 +13,12 @@ class Kategori extends Model
     public function alat(): HasMany {
         return $this->hasMany(Alat::class);
     }
+
+    // [BARU] True jika ada alat dalam kategori ini yang sedang dipinjam
+    public function punyaAlatDipinjam(): bool
+    {
+        return $this->alat()
+            ->whereHas('detailPinjam.peminjaman', fn ($q) => $q->whereIn('status', Peminjaman::STATUS_AKTIF))
+            ->exists();
+    }
 }

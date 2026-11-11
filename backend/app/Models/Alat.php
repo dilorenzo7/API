@@ -30,4 +30,12 @@ class Alat extends Model
     {
         return $this->hasMany(DetailPinjam::class);
     }
+
+    // [BARU] True jika alat ini ada di peminjaman yang belum selesai
+    public function sedangDipinjam(): bool
+    {
+        return $this->detailPinjam()
+            ->whereHas('peminjaman', fn ($q) => $q->whereIn('status', Peminjaman::STATUS_AKTIF))
+            ->exists();
+    }
 }

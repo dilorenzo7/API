@@ -89,14 +89,23 @@
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-xl transition">
                                     <i class="bi bi-pencil-fill text-[10px]"></i> Edit
                                 </a>
-                                <form action="{{ route('admin.kategori.destroy', $kategori->id) }}" method="POST"
-                                      onsubmit="return confirm('Hapus kategori \'{{ $kategori->nama_kategori }}\'?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-xl transition">
-                                        <i class="bi bi-trash3-fill text-[10px]"></i> Hapus
-                                    </button>
-                                </form>
+
+                                {{-- [BARU] Ada alat dalam kategori yang sedang dipinjam: tombol Hapus dikunci --}}
+                                @if($kategori->punyaAlatDipinjam())
+                                    <span title="Tidak bisa dihapus: ada alat dalam kategori ini yang sedang dipinjam"
+                                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 text-xs font-semibold rounded-xl cursor-not-allowed">
+                                        <i class="bi bi-lock-fill text-[10px]"></i> Dipinjam
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.kategori.destroy', $kategori->id) }}" method="POST"
+                                          onsubmit="return confirm('Hapus kategori \'{{ $kategori->nama_kategori }}\'?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-xl transition">
+                                            <i class="bi bi-trash3-fill text-[10px]"></i> Hapus
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>

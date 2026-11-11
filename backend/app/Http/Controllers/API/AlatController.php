@@ -73,9 +73,10 @@ class AlatController extends Controller
 
     public function destroy(Alat $alat): JsonResponse
     {
-        if ($alat->detailPinjam()->count() > 0) {
+        // [BARU] Hanya diblokir jika alat sedang dipinjam / diajukan
+        if ($alat->sedangDipinjam()) {
             return response()->json([
-                'message' => 'Alat tidak dapat dihapus karena masih memiliki riwayat peminjaman.',
+                'message' => 'Alat tidak dapat dihapus karena sedang dipinjam atau masih dalam pengajuan.',
             ], 422);
         }
 

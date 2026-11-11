@@ -12,6 +12,9 @@ class Peminjaman extends Model
 {
     protected $table = 'peminjaman';
 
+    // [BARU] Status yang dianggap "masih berjalan" (memblokir penghapusan)
+    public const STATUS_AKTIF = ['diajukan', 'dipinjam', 'telat'];
+
     protected $fillable = [
         'user_id', 'tgl_pinjam', 'tgl_kembali_plan', 'status', 'tgl_ajukan_kembali'
     ];
